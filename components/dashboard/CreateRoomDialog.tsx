@@ -30,7 +30,7 @@ export default function CreateRoomDialog() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    destructionTimer: '',
+    destructionTimer: 'none',
     autoDelete: true,
   });
 
@@ -43,7 +43,7 @@ export default function CreateRoomDialog() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: formData.name || undefined,
-          destructionTimer: formData.destructionTimer ? parseInt(formData.destructionTimer) : undefined,
+          destructionTimer: formData.destructionTimer !== 'none' ? parseInt(formData.destructionTimer) : undefined,
           autoDelete: formData.autoDelete,
         }),
       });
@@ -106,7 +106,7 @@ export default function CreateRoomDialog() {
                 <SelectValue placeholder="Select duration" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No timer</SelectItem>
+                <SelectItem value="none">No timer</SelectItem>
                 {DESTRUCTION_TIMERS.map((timer) => (
                   <SelectItem key={timer.value} value={timer.value.toString()}>
                     {timer.label}
