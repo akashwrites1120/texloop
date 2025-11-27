@@ -19,6 +19,7 @@ const MessageSchema = new Schema<Message>(
     message: {
       type: String,
       required: true,
+      // Message content is stored encrypted
     },
     timestamp: {
       type: Date,

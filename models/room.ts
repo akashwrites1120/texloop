@@ -49,6 +49,14 @@ const RoomSchema = new Schema<Room>(
       type: String,
       default: '',
     },
+    isPrivate: {
+      type: Boolean,
+      default: false,
+    },
+    passwordHash: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,

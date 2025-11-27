@@ -7,13 +7,15 @@ import { CreateMessageInput } from '@/types/message';
 // GET all messages for a room
 export async function GET(
   request: NextRequest,
-  { params }: { params: { roomId: string } }
+  { params }: { params: Promise<{ roomId: string }> }
 ) {
   try {
     await connectDB();
+    
+    const { roomId } = await params;
 
     // Verify room exists
-    const room = await RoomModel.findOne({ roomId: params.roomId });
+    const room = await RoomModel.findOne({ roomId });
     if (!room) {
       return NextResponse.json(
         { success: false, error: 'Room not found' },
@@ -21,7 +23,7 @@ export async function GET(
       );
     }
 
-    const messages = await MessageModel.find({ roomId: params.roomId })
+    const messages = await MessageModel.find({ roomId })
       .sort({ timestamp: 1 })
       .lean();
 
@@ -41,17 +43,19 @@ export async function GET(
 // POST create new message
 export async function POST(
   request: NextRequest,
-  { params }: { params: { roomId: string } }
+  { params }: { params: Promise<{ roomId: string }> }
 ) {
   try {
     await connectDB();
+    
+    const { roomId } = await params;
 
     const body: CreateMessageInput = await request.json();
     const { userId, username, message, type = 'text' } = body;
 
     // Verify room exists and is active
     const room = await RoomModel.findOne({ 
-      roomId: params.roomId,
+      roomId,
       isActive: true 
     });
 
@@ -64,7 +68,7 @@ export async function POST(
 
     // Create message
     const newMessage = await MessageModel.create({
-      roomId: params.roomId,
+      roomId,
       userId,
       username,
       message,
@@ -74,7 +78,7 @@ export async function POST(
 
     // Update room last activity
     await RoomModel.updateOne(
-      { roomId: params.roomId },
+      { roomId },
       { lastActivity: new Date() }
     );
 

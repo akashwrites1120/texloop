@@ -5,12 +5,14 @@ import RoomModel from '@/models/Room';
 // GET specific room by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { roomId: string } }
+  { params }: { params: Promise<{ roomId: string }> }
 ) {
   try {
     await connectDB();
+    
+    const { roomId } = await params;
 
-    const room = await RoomModel.findOne({ roomId: params.roomId }).lean();
+    const room = await RoomModel.findOne({ roomId }).lean();
 
     if (!room) {
       return NextResponse.json(
@@ -22,7 +24,7 @@ export async function GET(
     // Check if room has expired
     if (room.expiresAt && new Date(room.expiresAt) < new Date()) {
       await RoomModel.updateOne(
-        { roomId: params.roomId },
+        { roomId },
         { isActive: false }
       );
 
@@ -34,7 +36,7 @@ export async function GET(
 
     // Update last activity
     await RoomModel.updateOne(
-      { roomId: params.roomId },
+      { roomId },
       { lastActivity: new Date() }
     );
 
@@ -54,12 +56,14 @@ export async function GET(
 // DELETE room
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { roomId: string } }
+  { params }: { params: Promise<{ roomId: string }> }
 ) {
   try {
     await connectDB();
+    
+    const { roomId } = await params;
 
-    const room = await RoomModel.findOne({ roomId: params.roomId });
+    const room = await RoomModel.findOne({ roomId });
 
     if (!room) {
       return NextResponse.json(
@@ -69,7 +73,7 @@ export async function DELETE(
     }
 
     await RoomModel.updateOne(
-      { roomId: params.roomId },
+      { roomId },
       { isActive: false }
     );
 
@@ -89,15 +93,17 @@ export async function DELETE(
 // PATCH update room text content
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { roomId: string } }
+  { params }: { params: Promise<{ roomId: string }> }
 ) {
   try {
     await connectDB();
+    
+    const { roomId } = await params;
 
     const { textContent } = await request.json();
 
     const room = await RoomModel.findOneAndUpdate(
-      { roomId: params.roomId },
+      { roomId },
       { 
         textContent,
         lastActivity: new Date()

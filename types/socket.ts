@@ -8,7 +8,7 @@ export interface SocketUser {
 
 export interface ServerToClientEvents {
   'message:new': (message: Message) => void;
-  'text:update': (data: { textContent: string; userId: string }) => void;
+  'text:update': (data: { textContent: string }) => void;
   'user:joined': (data: { userId: string; username: string }) => void;
   'user:left': (data: { userId: string; username: string }) => void;
   'room:deleted': () => void;
@@ -16,10 +16,9 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-  'room:join': (data: { roomId: string; userId: string; username: string }) => void;
+  'room:join': (data: { roomId: string; userId: string; username: string; password?: string }) => void;
   'room:leave': (data: { roomId: string; userId: string }) => void;
   'message:send': (data: { roomId: string; userId: string; username: string; message: string }) => void;
-  'text:change': (data: { roomId: string; textContent: string; userId: string }) => void;
 }
 
 export interface InterServerEvents {
