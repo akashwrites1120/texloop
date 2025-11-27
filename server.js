@@ -1,7 +1,11 @@
-const { createServer } = require('http');
-const { parse } = require('url');
-const next = require('next');
-const { Server } = require('socket.io');
+import { createServer } from 'http';
+import { parse } from 'url';
+import next from 'next';
+import { Server } from 'socket.io';
+import mongoose from 'mongoose';
+
+import RoomModel from './models/Room.js';
+import MessageModel from './models/Message.js';
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = 'localhost';
@@ -9,6 +13,12 @@ const port = parseInt(process.env.PORT || '3000', 10);
 
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
+
+// MongoDB Connection
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => console.log('✅ MongoDB connected'))
+  .catch((err) => console.error('❌ MongoDB connection error:', err));
 
 app.prepare().then(() => {
   const httpServer = createServer(async (req, res) => {
@@ -22,7 +32,6 @@ app.prepare().then(() => {
     }
   });
 
-  // Initialize Socket.IO
   const io = new Server(httpServer, {
     path: '/api/socket',
     addTrailingSlash: false,
@@ -32,19 +41,6 @@ app.prepare().then(() => {
     },
   });
 
-  // Import and initialize socket handlers
-  const mongoose = require('mongoose');
-  
-  // MongoDB connection
-  mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('✅ MongoDB connected'))
-    .catch(err => console.error('❌ MongoDB connection error:', err));
-
-  // Import models (they need to be required, not imported)
-  const RoomModel = require('./models/Room').default;
-  const MessageModel = require('./models/Message').default;
-
-  // Socket.IO connection handler
   io.on('connection', (socket) => {
     console.log('✅ Socket connected:', socket.id);
 
@@ -63,9 +59,9 @@ app.prepare().then(() => {
         if (!room.participants.includes(userId)) {
           await RoomModel.updateOne(
             { roomId },
-            { 
+            {
               $addToSet: { participants: userId },
-              lastActivity: new Date()
+              lastActivity: new Date(),
             }
           );
         }
@@ -100,9 +96,9 @@ app.prepare().then(() => {
 
         const room = await RoomModel.findOneAndUpdate(
           { roomId },
-          { 
+          {
             $pull: { participants: userId },
-            lastActivity: new Date()
+            lastActivity: new Date(),
           },
           { new: true }
         );
@@ -121,8 +117,6 @@ app.prepare().then(() => {
           io.to(roomId).emit('message:new', systemMessage);
           io.to(roomId).emit('participants:update', room.participants);
         }
-
-        console.log(`👋 User ${userId} left room: ${roomId}`);
       } catch (error) {
         console.error('Error leaving room:', error);
       }
@@ -140,27 +134,22 @@ app.prepare().then(() => {
           timestamp: new Date(),
         });
 
-        await RoomModel.updateOne(
-          { roomId },
-          { lastActivity: new Date() }
-        );
+        await RoomModel.updateOne({ roomId }, { lastActivity: new Date() });
 
         io.to(roomId).emit('message:new', newMessage);
-
-        console.log(`💬 Message in ${roomId}: ${message.substring(0, 30)}...`);
       } catch (error) {
         console.error('Error sending message:', error);
       }
     });
 
-    // Update text content
+    // Update text
     socket.on('text:change', async ({ roomId, textContent, userId }) => {
       try {
         await RoomModel.updateOne(
           { roomId },
-          { 
+          {
             textContent,
-            lastActivity: new Date()
+            lastActivity: new Date(),
           }
         );
 
@@ -178,9 +167,9 @@ app.prepare().then(() => {
 
           const room = await RoomModel.findOneAndUpdate(
             { roomId },
-            { 
+            {
               $pull: { participants: userId },
-              lastActivity: new Date()
+              lastActivity: new Date(),
             },
             { new: true }
           );
