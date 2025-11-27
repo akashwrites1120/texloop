@@ -1,15 +1,15 @@
-import { createServer } from 'http';
-import { parse } from 'url';
-import next from 'next';
-import { Server } from 'socket.io';
-import mongoose from 'mongoose';
+import { createServer } from "http";
+import { parse } from "url";
+import next from "next";
+import { Server } from "socket.io";
+import mongoose from "mongoose";
 
-import RoomModel from './models/Room.js';
-import MessageModel from './models/Message.js';
+import RoomModel from "./models/Room.js";
+import MessageModel from "./models/Message.js";
 
-const dev = process.env.NODE_ENV !== 'production';
-const hostname = 'localhost';
-const port = parseInt(process.env.PORT || '3000', 10);
+const dev = process.env.NODE_ENV !== "production";
+const hostname = "localhost";
+const port = parseInt(process.env.PORT || "3000", 10);
 
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
@@ -17,8 +17,8 @@ const handle = app.getRequestHandler();
 // MongoDB Connection
 mongoose
   .connect(process.env.MONGODB_URI)
-  .then(() => console.log('✅ MongoDB connected'))
-  .catch((err) => console.error('❌ MongoDB connection error:', err));
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
 app.prepare().then(() => {
   const httpServer = createServer(async (req, res) => {
@@ -26,31 +26,46 @@ app.prepare().then(() => {
       const parsedUrl = parse(req.url, true);
       await handle(req, res, parsedUrl);
     } catch (err) {
-      console.error('Error occurred handling', req.url, err);
+      console.error("Error occurred handling", req.url, err);
       res.statusCode = 500;
-      res.end('internal server error');
+      res.end("internal server error");
     }
   });
 
   const io = new Server(httpServer, {
-    path: '/api/socket',
+    path: "/api/socket",
     addTrailingSlash: false,
     cors: {
       origin: process.env.NEXT_PUBLIC_APP_URL || `http://localhost:${port}`,
-      methods: ['GET', 'POST'],
+      methods: ["GET", "POST"],
     },
   });
 
-  io.on('connection', (socket) => {
-    console.log('✅ Socket connected:', socket.id);
+  // Store io instance globally for API routes
+  global.io = io;
+
+  io.on("connection", (socket) => {
+    console.log("✅ Socket connected:", socket.id);
 
     // Join room
-    socket.on('room:join', async ({ roomId, userId, username }) => {
+    socket.on("room:join", async ({ roomId, userId, username, password }) => {
       try {
         const room = await RoomModel.findOne({ roomId, isActive: true });
         if (!room) {
-          socket.emit('room:deleted');
+          socket.emit("room:deleted", {
+            message: "Room not found or has been deleted.",
+          });
           return;
+        }
+
+        // Verify password for private rooms
+        if (room.isPrivate && password) {
+          const { verifyPassword } = await import("./lib/encryption.js");
+          const isValid = await verifyPassword(password, room.passwordHash);
+          if (!isValid) {
+            socket.emit("error", { message: "Incorrect password" });
+            return;
+          }
         }
 
         socket.join(roomId);
@@ -68,29 +83,30 @@ app.prepare().then(() => {
 
         const systemMessage = await MessageModel.create({
           roomId,
-          userId: 'system',
-          username: 'System',
+          userId: "system",
+          username: "System",
           message: `${username} joined the room`,
-          type: 'system',
+          type: "system",
           timestamp: new Date(),
         });
 
-        io.to(roomId).emit('user:joined', { userId, username });
-        io.to(roomId).emit('message:new', systemMessage);
+        io.to(roomId).emit("user:joined", { userId, username });
+        io.to(roomId).emit("message:new", systemMessage.toObject());
 
         const updatedRoom = await RoomModel.findOne({ roomId });
         if (updatedRoom) {
-          io.to(roomId).emit('participants:update', updatedRoom.participants);
+          io.to(roomId).emit("participants:update", updatedRoom.participants);
         }
 
         console.log(`👤 ${username} joined room: ${roomId}`);
       } catch (error) {
-        console.error('Error joining room:', error);
+        console.error("Error joining room:", error);
+        socket.emit("error", { message: "Failed to join room" });
       }
     });
 
     // Leave room
-    socket.on('room:leave', async ({ roomId, userId }) => {
+    socket.on("room:leave", async ({ roomId, userId }) => {
       try {
         socket.leave(roomId);
 
@@ -106,44 +122,56 @@ app.prepare().then(() => {
         if (room && socket.data.username) {
           const systemMessage = await MessageModel.create({
             roomId,
-            userId: 'system',
-            username: 'System',
+            userId: "system",
+            username: "System",
             message: `${socket.data.username} left the room`,
-            type: 'system',
+            type: "system",
             timestamp: new Date(),
           });
 
-          io.to(roomId).emit('user:left', { userId, username: socket.data.username });
-          io.to(roomId).emit('message:new', systemMessage);
-          io.to(roomId).emit('participants:update', room.participants);
+          io.to(roomId).emit("user:left", {
+            userId,
+            username: socket.data.username,
+          });
+          io.to(roomId).emit("message:new", systemMessage.toObject());
+          io.to(roomId).emit("participants:update", room.participants);
         }
+
+        console.log(`👋 User ${userId} left room: ${roomId}`);
       } catch (error) {
-        console.error('Error leaving room:', error);
+        console.error("Error leaving room:", error);
       }
     });
 
     // Send message
-    socket.on('message:send', async ({ roomId, userId, username, message }) => {
+    socket.on("message:send", async ({ roomId, userId, username, message }) => {
       try {
+        console.log(`📨 Received message in room ${roomId}:`, message);
+
         const newMessage = await MessageModel.create({
           roomId,
           userId,
           username,
           message,
-          type: 'text',
+          type: "text",
           timestamp: new Date(),
         });
 
         await RoomModel.updateOne({ roomId }, { lastActivity: new Date() });
 
-        io.to(roomId).emit('message:new', newMessage);
+        // Broadcast to ALL users in the room (including sender)
+        const messageObj = newMessage.toObject();
+        io.to(roomId).emit("message:new", messageObj);
+
+        console.log(`💬 Message sent in ${roomId} by ${username}`);
       } catch (error) {
-        console.error('Error sending message:', error);
+        console.error("Error sending message:", error);
+        socket.emit("error", { message: "Failed to send message" });
       }
     });
 
-    // Update text
-    socket.on('text:change', async ({ roomId, textContent, userId }) => {
+    // Update text content (live editing)
+    socket.on("text:change", async ({ roomId, textContent, userId }) => {
       try {
         await RoomModel.updateOne(
           { roomId },
@@ -153,14 +181,17 @@ app.prepare().then(() => {
           }
         );
 
-        socket.to(roomId).emit('text:update', { textContent, userId });
+        // Broadcast to ALL users in the room (including sender for confirmation)
+        io.to(roomId).emit("text:update", { textContent });
+
+        console.log(`📝 Text updated in room ${roomId}`);
       } catch (error) {
-        console.error('Error updating text:', error);
+        console.error("Error updating text:", error);
       }
     });
 
     // Disconnect
-    socket.on('disconnect', async () => {
+    socket.on("disconnect", async () => {
       try {
         if (socket.data.roomId && socket.data.userId) {
           const { roomId, userId, username } = socket.data;
@@ -177,28 +208,28 @@ app.prepare().then(() => {
           if (room && username) {
             const systemMessage = await MessageModel.create({
               roomId,
-              userId: 'system',
-              username: 'System',
+              userId: "system",
+              username: "System",
               message: `${username} disconnected`,
-              type: 'system',
+              type: "system",
               timestamp: new Date(),
             });
 
-            io.to(roomId).emit('user:left', { userId, username });
-            io.to(roomId).emit('message:new', systemMessage);
-            io.to(roomId).emit('participants:update', room.participants);
+            io.to(roomId).emit("user:left", { userId, username });
+            io.to(roomId).emit("message:new", systemMessage.toObject());
+            io.to(roomId).emit("participants:update", room.participants);
           }
         }
 
-        console.log('❌ Socket disconnected:', socket.id);
+        console.log("❌ Socket disconnected:", socket.id);
       } catch (error) {
-        console.error('Error on disconnect:', error);
+        console.error("Error on disconnect:", error);
       }
     });
   });
 
   httpServer
-    .once('error', (err) => {
+    .once("error", (err) => {
       console.error(err);
       process.exit(1);
     })

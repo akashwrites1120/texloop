@@ -1,164 +1,90 @@
-import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import RoomModel from '@/models/Room';
-import { verifyPassword } from '@/lib/encryption';
-import { DeleteRoomInput, JoinRoomInput } from '@/types/room';
+import { NextRequest, NextResponse } from "next/server";
+import connectDB from "@/lib/mongodb";
+import RoomModel from "@/models/Room";
+import { CreateRoomInput } from "@/types/room";
+import { hashPassword } from "@/lib/encryption";
+import { nanoid } from "nanoid";
 
-// GET specific room by ID
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ roomId: string }> }
-) {
+// POST - Create a new room
+export async function POST(request: NextRequest) {
   try {
     await connectDB();
-    
-    const { roomId } = await params;
 
-    const room = await RoomModel.findOne({ roomId }).lean();
+    const body: CreateRoomInput = await request.json();
 
-    if (!room) {
+    // Validate password is provided
+    if (!body.password || !body.password.trim()) {
       return NextResponse.json(
-        { success: false, error: 'Room not found' },
-        { status: 404 }
+        { success: false, error: "Password is required for all rooms" },
+        { status: 400 }
       );
     }
 
-    // Check if room has expired
-    if (room.expiresAt && new Date(room.expiresAt) < new Date()) {
-      await RoomModel.updateOne(
-        { roomId },
-        { isActive: false }
-      );
+    // Generate unique room ID
+    const roomId = body.name || `${nanoid(8)}-${nanoid(4)}`;
 
-      return NextResponse.json(
-        { success: false, error: 'Room has expired' },
-        { status: 410 }
-      );
+    // Hash the password
+    const passwordHash = await hashPassword(body.password);
+
+    // Calculate expiration date if destruction timer is set
+    let expiresAt: Date | undefined;
+    if (body.destructionTimer) {
+      expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + body.destructionTimer);
     }
+
+    // Create room
+    const room = await RoomModel.create({
+      roomId,
+      name: body.name,
+      createdBy: "anonymous", // You can add user ID here if you have auth
+      createdAt: new Date(),
+      expiresAt,
+      lastActivity: new Date(),
+      isActive: true,
+      destructionTimer: body.destructionTimer,
+      autoDelete: body.autoDelete,
+      participants: [],
+      textContent: "",
+      isPrivate: body.isPrivate,
+      passwordHash,
+    });
 
     // Don't send password hash to client
-    const { passwordHash, ...roomWithoutPassword } = room;
-
-    // If private room, indicate it requires password
-    if (room.isPrivate) {
-      return NextResponse.json({
-        success: true,
-        room: roomWithoutPassword,
-        requiresPassword: true,
-      });
-    }
-
-    // Update last activity
-    await RoomModel.updateOne(
-      { roomId },
-      { lastActivity: new Date() }
-    );
+    const { passwordHash: _, ...roomWithoutPassword } = room.toObject();
 
     return NextResponse.json({
       success: true,
       room: roomWithoutPassword,
     });
   } catch (error) {
-    console.error('Error fetching room:', error);
+    console.error("Error creating room:", error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch room' },
+      { success: false, error: "Failed to create room" },
       { status: 500 }
     );
   }
 }
 
-// DELETE room (requires password for private rooms)
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ roomId: string }> }
-) {
+// GET - List all active rooms
+export async function GET() {
   try {
     await connectDB();
-    
-    const { roomId } = await params;
-    const body: DeleteRoomInput = await request.json();
 
-    const room = await RoomModel.findOne({ roomId });
-
-    if (!room) {
-      return NextResponse.json(
-        { success: false, error: 'Room not found' },
-        { status: 404 }
-      );
-    }
-
-    // Verify password if private room
-    if (room.isPrivate && room.passwordHash) {
-      if (!body.password) {
-        return NextResponse.json(
-          { success: false, error: 'Password required to delete this room' },
-          { status: 403 }
-        );
-      }
-
-      const isValid = await verifyPassword(body.password, room.passwordHash);
-      if (!isValid) {
-        return NextResponse.json(
-          { success: false, error: 'Incorrect password' },
-          { status: 403 }
-        );
-      }
-    }
-
-    await RoomModel.updateOne(
-      { roomId },
-      { isActive: false }
-    );
+    const rooms = await RoomModel.find({ isActive: true })
+      .select("-passwordHash")
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .lean();
 
     return NextResponse.json({
       success: true,
-      message: 'Room deleted successfully',
+      rooms,
     });
   } catch (error) {
-    console.error('Error deleting room:', error);
+    console.error("Error fetching rooms:", error);
     return NextResponse.json(
-      { success: false, error: 'Failed to delete room' },
-      { status: 500 }
-    );
-  }
-}
-
-// PATCH update room text content
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ roomId: string }> }
-) {
-  try {
-    await connectDB();
-    
-    const { roomId } = await params;
-
-    const { textContent } = await request.json();
-
-    const room = await RoomModel.findOneAndUpdate(
-      { roomId },
-      { 
-        textContent,
-        lastActivity: new Date()
-      },
-      { new: true }
-    );
-
-    if (!room) {
-      return NextResponse.json(
-        { success: false, error: 'Room not found' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      room,
-    });
-  } catch (error) {
-    console.error('Error updating room:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to update room' },
+      { success: false, error: "Failed to fetch rooms" },
       { status: 500 }
     );
   }

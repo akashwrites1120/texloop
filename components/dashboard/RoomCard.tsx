@@ -1,33 +1,50 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Users, Trash2 } from 'lucide-react';
-import { Room } from '@/types/room';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import Timer from '@/components/shared/Timer';
-import { formatDistanceToNow } from 'date-fns';
+import Link from "next/link";
+import { Users, Lock } from "lucide-react";
+import { Room } from "@/types/room";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import Timer from "@/components/shared/Timer";
+import { formatDistanceToNow } from "date-fns";
 
 interface RoomCardProps {
   room: Room;
 }
 
 export default function RoomCard({ room }: RoomCardProps) {
-  const createdAgo = formatDistanceToNow(new Date(room.createdAt), { addSuffix: true });
+  const createdAgo = formatDistanceToNow(new Date(room.createdAt), {
+    addSuffix: true,
+  });
   const isExpired = room.expiresAt && new Date(room.expiresAt) < new Date();
 
   return (
-    <Card className={`hover:shadow-lg transition-shadow ${isExpired ? 'opacity-50' : ''}`}>
+    <Card
+      className={`hover:shadow-lg transition-shadow ${isExpired ? "opacity-50" : ""}`}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-lg truncate">{room.roomId}</h3>
-            <p className="text-sm text-muted-foreground">Created {createdAgo}</p>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-lg truncate">{room.roomId}</h3>
+              {room.isPrivate && (
+                <Badge variant="secondary" className="gap-1 text-xs">
+                  <Lock className="h-3 w-3" />
+                  Private
+                </Badge>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Created {createdAgo}
+            </p>
           </div>
-          {room.expiresAt && (
-            <Timer expiresAt={room.expiresAt} />
-          )}
+          {room.expiresAt && <Timer expiresAt={room.expiresAt} />}
         </div>
       </CardHeader>
 
@@ -54,7 +71,7 @@ export default function RoomCard({ room }: RoomCardProps) {
       <CardFooter className="pt-3 border-t">
         <Link href={`/room/${room.roomId}`} className="flex-1">
           <Button className="w-full" disabled={isExpired}>
-            {isExpired ? 'Expired' : 'Join Room'}
+            {isExpired ? "Expired" : "Join Room"}
           </Button>
         </Link>
       </CardFooter>
