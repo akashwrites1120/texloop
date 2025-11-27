@@ -1,58 +1,65 @@
-import { Server as NetServer } from 'http';
-import { Server as SocketIOServer } from 'socket.io';
-import { ServerToClientEvents, ClientToServerEvents, InterServerEvents, SocketData } from '@/types/socket';
-import connectDB from './mongodb';
-import RoomModel from '@/models/Room';
-import MessageModel from '@/models/Message';
+const { createServer } = require('http');
+const { parse } = require('url');
+const next = require('next');
+const { Server } = require('socket.io');
 
-export type SocketServer = SocketIOServer<
-  ClientToServerEvents,
-  ServerToClientEvents,
-  InterServerEvents,
-  SocketData
->;
+const dev = process.env.NODE_ENV !== 'production';
+const hostname = 'localhost';
+const port = parseInt(process.env.PORT || '3000', 10);
 
-let io: SocketServer | undefined;
+const app = next({ dev, hostname, port });
+const handle = app.getRequestHandler();
 
-export const initSocket = (httpServer: NetServer): SocketServer => {
-  if (io) {
-    return io;
-  }
+app.prepare().then(() => {
+  const httpServer = createServer(async (req, res) => {
+    try {
+      const parsedUrl = parse(req.url, true);
+      await handle(req, res, parsedUrl);
+    } catch (err) {
+      console.error('Error occurred handling', req.url, err);
+      res.statusCode = 500;
+      res.end('internal server error');
+    }
+  });
 
-  io = new SocketIOServer<
-    ClientToServerEvents,
-    ServerToClientEvents,
-    InterServerEvents,
-    SocketData
-  >(httpServer, {
+  // Initialize Socket.IO
+  const io = new Server(httpServer, {
     path: '/api/socket',
     addTrailingSlash: false,
     cors: {
-      origin: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+      origin: process.env.NEXT_PUBLIC_APP_URL || `http://localhost:${port}`,
       methods: ['GET', 'POST'],
     },
   });
 
+  // Import and initialize socket handlers
+  const mongoose = require('mongoose');
+  
+  // MongoDB connection
+  mongoose.connect(process.env.MONGODB_URI)
+    .then(() => console.log('✅ MongoDB connected'))
+    .catch(err => console.error('❌ MongoDB connection error:', err));
+
+  // Import models (they need to be required, not imported)
+  const RoomModel = require('./models/Room').default;
+  const MessageModel = require('./models/Message').default;
+
+  // Socket.IO connection handler
   io.on('connection', (socket) => {
     console.log('✅ Socket connected:', socket.id);
 
     // Join room
     socket.on('room:join', async ({ roomId, userId, username }) => {
       try {
-        await connectDB();
-
-        // Verify room exists
         const room = await RoomModel.findOne({ roomId, isActive: true });
         if (!room) {
           socket.emit('room:deleted');
           return;
         }
 
-        // Join socket room
         socket.join(roomId);
         socket.data = { userId, username, roomId };
 
-        // Add to participants
         if (!room.participants.includes(userId)) {
           await RoomModel.updateOne(
             { roomId },
@@ -63,7 +70,6 @@ export const initSocket = (httpServer: NetServer): SocketServer => {
           );
         }
 
-        // Create system message
         const systemMessage = await MessageModel.create({
           roomId,
           userId: 'system',
@@ -73,14 +79,12 @@ export const initSocket = (httpServer: NetServer): SocketServer => {
           timestamp: new Date(),
         });
 
-        // Notify room
-        io?.to(roomId).emit('user:joined', { userId, username });
-        io?.to(roomId).emit('message:new', systemMessage);
+        io.to(roomId).emit('user:joined', { userId, username });
+        io.to(roomId).emit('message:new', systemMessage);
 
-        // Send updated participants list
         const updatedRoom = await RoomModel.findOne({ roomId });
         if (updatedRoom) {
-          io?.to(roomId).emit('participants:update', updatedRoom.participants);
+          io.to(roomId).emit('participants:update', updatedRoom.participants);
         }
 
         console.log(`👤 ${username} joined room: ${roomId}`);
@@ -92,11 +96,8 @@ export const initSocket = (httpServer: NetServer): SocketServer => {
     // Leave room
     socket.on('room:leave', async ({ roomId, userId }) => {
       try {
-        await connectDB();
-
         socket.leave(roomId);
 
-        // Remove from participants
         const room = await RoomModel.findOneAndUpdate(
           { roomId },
           { 
@@ -107,7 +108,6 @@ export const initSocket = (httpServer: NetServer): SocketServer => {
         );
 
         if (room && socket.data.username) {
-          // Create system message
           const systemMessage = await MessageModel.create({
             roomId,
             userId: 'system',
@@ -117,10 +117,9 @@ export const initSocket = (httpServer: NetServer): SocketServer => {
             timestamp: new Date(),
           });
 
-          // Notify room
-          io?.to(roomId).emit('user:left', { userId, username: socket.data.username });
-          io?.to(roomId).emit('message:new', systemMessage);
-          io?.to(roomId).emit('participants:update', room.participants);
+          io.to(roomId).emit('user:left', { userId, username: socket.data.username });
+          io.to(roomId).emit('message:new', systemMessage);
+          io.to(roomId).emit('participants:update', room.participants);
         }
 
         console.log(`👋 User ${userId} left room: ${roomId}`);
@@ -132,9 +131,6 @@ export const initSocket = (httpServer: NetServer): SocketServer => {
     // Send message
     socket.on('message:send', async ({ roomId, userId, username, message }) => {
       try {
-        await connectDB();
-
-        // Create message
         const newMessage = await MessageModel.create({
           roomId,
           userId,
@@ -144,14 +140,12 @@ export const initSocket = (httpServer: NetServer): SocketServer => {
           timestamp: new Date(),
         });
 
-        // Update room activity
         await RoomModel.updateOne(
           { roomId },
           { lastActivity: new Date() }
         );
 
-        // Broadcast to room
-        io?.to(roomId).emit('message:new', newMessage);
+        io.to(roomId).emit('message:new', newMessage);
 
         console.log(`💬 Message in ${roomId}: ${message.substring(0, 30)}...`);
       } catch (error) {
@@ -162,9 +156,6 @@ export const initSocket = (httpServer: NetServer): SocketServer => {
     // Update text content
     socket.on('text:change', async ({ roomId, textContent, userId }) => {
       try {
-        await connectDB();
-
-        // Update room text content
         await RoomModel.updateOne(
           { roomId },
           { 
@@ -173,7 +164,6 @@ export const initSocket = (httpServer: NetServer): SocketServer => {
           }
         );
 
-        // Broadcast to others in room (exclude sender)
         socket.to(roomId).emit('text:update', { textContent, userId });
       } catch (error) {
         console.error('Error updating text:', error);
@@ -184,11 +174,8 @@ export const initSocket = (httpServer: NetServer): SocketServer => {
     socket.on('disconnect', async () => {
       try {
         if (socket.data.roomId && socket.data.userId) {
-          await connectDB();
-
           const { roomId, userId, username } = socket.data;
 
-          // Remove from participants
           const room = await RoomModel.findOneAndUpdate(
             { roomId },
             { 
@@ -199,7 +186,6 @@ export const initSocket = (httpServer: NetServer): SocketServer => {
           );
 
           if (room && username) {
-            // Create system message
             const systemMessage = await MessageModel.create({
               roomId,
               userId: 'system',
@@ -209,9 +195,9 @@ export const initSocket = (httpServer: NetServer): SocketServer => {
               timestamp: new Date(),
             });
 
-            io?.to(roomId).emit('user:left', { userId, username });
-            io?.to(roomId).emit('message:new', systemMessage);
-            io?.to(roomId).emit('participants:update', room.participants);
+            io.to(roomId).emit('user:left', { userId, username });
+            io.to(roomId).emit('message:new', systemMessage);
+            io.to(roomId).emit('participants:update', room.participants);
           }
         }
 
@@ -222,10 +208,13 @@ export const initSocket = (httpServer: NetServer): SocketServer => {
     });
   });
 
-  console.log('🚀 Socket.IO server initialized');
-  return io;
-};
-
-export const getIO = (): SocketServer | undefined => {
-  return io;
-};
+  httpServer
+    .once('error', (err) => {
+      console.error(err);
+      process.exit(1);
+    })
+    .listen(port, () => {
+      console.log(`🚀 Server ready on http://${hostname}:${port}`);
+      console.log(`🔌 Socket.IO ready on ws://${hostname}:${port}/api/socket`);
+    });
+});
