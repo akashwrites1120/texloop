@@ -1,28 +1,27 @@
 'use client';
 
 import { useState, KeyboardEvent } from 'react';
-import { Send } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { MAX_MESSAGE_LENGTH } from '@/lib/constants';
+import { Textarea } from '@/components/ui/textarea';
+import { Send } from 'lucide-react';
 
 interface MessageInputProps {
   onSend: (message: string) => void;
-  disabled?: boolean;
 }
 
-export default function MessageInput({ onSend, disabled }: MessageInputProps) {
+export default function MessageInput({ onSend }: MessageInputProps) {
   const [message, setMessage] = useState('');
 
   const handleSend = () => {
     const trimmedMessage = message.trim();
-    if (trimmedMessage && trimmedMessage.length <= MAX_MESSAGE_LENGTH) {
+    if (trimmedMessage) {
+      console.log('Sending message:', trimmedMessage);
       onSend(trimmedMessage);
       setMessage('');
     }
   };
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -30,24 +29,28 @@ export default function MessageInput({ onSend, disabled }: MessageInputProps) {
   };
 
   return (
-    <div className="flex items-center gap-2 p-4 border-t bg-background">
-      <Input
-        type="text"
-        placeholder="Type your message..."
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        onKeyDown={handleKeyDown}
-        disabled={disabled}
-        maxLength={MAX_MESSAGE_LENGTH}
-        className="flex-1"
-      />
-      <Button
-        onClick={handleSend}
-        disabled={disabled || !message.trim()}
-        size="icon"
-      >
-        <Send className="h-4 w-4" />
-      </Button>
+    <div className="p-4 border-t bg-background">
+      <div className="flex gap-2">
+        <Textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Type a message... (Enter to send, Shift+Enter for new line)"
+          className="min-h-[60px] max-h-[120px] resize-none"
+          rows={2}
+        />
+        <Button 
+          onClick={handleSend} 
+          disabled={!message.trim()}
+          size="icon"
+          className="h-[60px] w-[60px] shrink-0"
+        >
+          <Send className="h-4 w-4" />
+        </Button>
+      </div>
+      <p className="text-xs text-muted-foreground mt-2">
+        Click on any message to view it in the editor
+      </p>
     </div>
   );
 }

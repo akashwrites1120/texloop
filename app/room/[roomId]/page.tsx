@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useSocket } from "@/hooks/useSocket";
 import { useRoom } from "@/hooks/useRoom";
@@ -37,7 +37,7 @@ export default function RoomPage() {
   const [username] = useState(() => `User-${nanoid(4)}`);
   const [textContent, setTextContent] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
-  const [hasJoined, setHasJoined] = useState(false);
+  // Removed hasJoined state in favor of ref
   const [roomDeleted, setRoomDeleted] = useState(false);
   const [deletionMessage, setDeletionMessage] = useState("");
 
@@ -145,9 +145,21 @@ export default function RoomPage() {
     }
   }, [room]);
 
+  const isJoinedRef = useRef(false);
+
+  // Reset joined status on disconnect
+  useEffect(() => {
+    if (!isConnected) {
+      isJoinedRef.current = false;
+    }
+  }, [isConnected]);
+
   // Join room via socket
   useEffect(() => {
-    if (!socket || !isConnected || !roomId || hasJoined || !isVerified) return;
+    if (!socket || !isConnected || !roomId || !isVerified) return;
+
+    // If already joined to this room with this socket, don't join again
+    if (isJoinedRef.current) return;
 
     console.log(`🔌 Joining room ${roomId} as ${username}`);
     socket.emit("room:join", {
@@ -156,11 +168,12 @@ export default function RoomPage() {
       username,
       password: room?.isPrivate ? password : undefined,
     });
-    setHasJoined(true);
+    isJoinedRef.current = true;
 
     return () => {
-      if (socket && hasJoined) {
-        socket.emit("room:leave", { roomId, userId });
+      // Optional cleanup if needed
+      if (socket && isConnected) {
+        // socket.emit("room:leave", { roomId, userId });
       }
     };
   }, [
@@ -169,7 +182,6 @@ export default function RoomPage() {
     roomId,
     userId,
     username,
-    hasJoined,
     isVerified,
     room,
     password,
@@ -181,7 +193,13 @@ export default function RoomPage() {
 
     const handleNewMessage = (message: Message) => {
       console.log("📨 New message received:", message);
-      setMessages((prev) => [...prev, message]);
+      setMessages((prev) => {
+        // Prevent duplicates
+        if (prev.some((m) => m._id === message._id)) {
+          return prev;
+        }
+        return [...prev, message];
+      });
     };
 
     const handleTextUpdate = ({
@@ -207,7 +225,7 @@ export default function RoomPage() {
     };
 
     const handleError = (data: { message: string }) => {
-      console.error("Socket error:", data.message);
+      console.error("❌ Socket error:", data.message);
       alert(data.message);
     };
 
@@ -244,20 +262,30 @@ export default function RoomPage() {
   const handleSendMessage = useCallback(
     (message: string) => {
       if (!socket || !isConnected) {
-        console.error("Cannot send message: socket not connected");
+        console.error("❌ Cannot send message: socket not connected");
+        alert("Not connected to server. Please refresh the page.");
         return;
       }
 
-      console.log(`📤 Sending message: ${message}`);
+      console.log(`📤 Sending message from user ${username}:`, message);
+
       socket.emit("message:send", {
         roomId,
         userId,
         username,
         message,
       });
+
+      console.log("✅ Message emit completed");
     },
     [socket, isConnected, roomId, userId, username]
   );
+
+  // Handle selecting a chat message to load into editor
+  const handleSelectMessage = useCallback((message: Message) => {
+    console.log("📋 Loading message into editor:", message._id);
+    setTextContent(message.message);
+  }, []);
 
   // Loading state
   if (isLoading || verifying) {
@@ -394,6 +422,7 @@ export default function RoomPage() {
             messages={messages}
             currentUserId={userId}
             onSendMessage={handleSendMessage}
+            onSelectMessage={handleSelectMessage}
           />
         </div>
       </div>

@@ -1,11 +1,16 @@
 import { createServer } from "http";
 import { parse } from "url";
 import next from "next";
+import { loadEnvConfig } from "@next/env";
+
+loadEnvConfig(process.cwd());
+
 import { Server } from "socket.io";
 import mongoose from "mongoose";
 
-import RoomModel from "./models/Room.js";
-import MessageModel from "./models/Message.js";
+import RoomModel from "./models/Room";
+import MessageModel from "./models/Message";
+import { verifyPassword } from "./lib/encryption";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
@@ -15,15 +20,19 @@ const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
 // MongoDB Connection
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ MongoDB connection error:", err));
+if (process.env.MONGODB_URI) {
+  mongoose
+    .connect(process.env.MONGODB_URI)
+    .then(() => console.log("✅ MongoDB connected"))
+    .catch((err) => console.error("❌ MongoDB connection error:", err));
+} else {
+  console.warn("⚠️ MONGODB_URI is not defined");
+}
 
 app.prepare().then(() => {
   const httpServer = createServer(async (req, res) => {
     try {
-      const parsedUrl = parse(req.url, true);
+      const parsedUrl = parse(req.url!, true);
       await handle(req, res, parsedUrl);
     } catch (err) {
       console.error("Error occurred handling", req.url, err);
@@ -42,6 +51,7 @@ app.prepare().then(() => {
   });
 
   // Store io instance globally for API routes
+  // @ts-ignore
   global.io = io;
 
   io.on("connection", (socket) => {
@@ -58,10 +68,11 @@ app.prepare().then(() => {
           return;
         }
 
-        // Verify password for private rooms
         if (room.isPrivate && password) {
-          const { verifyPassword } = await import("./lib/encryption.js");
-          const isValid = await verifyPassword(password, room.passwordHash);
+          const isValid = await verifyPassword(
+            password as string,
+            room.passwordHash
+          );
           if (!isValid) {
             socket.emit("error", { message: "Incorrect password" });
             return;
