@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import RoomModel from '@/models/Room';
+import RoomModel from '@/models/room';
 import { generateRoomId } from '@/lib/utils';
 import { CreateRoomInput } from '@/types/room';
 

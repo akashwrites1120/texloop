@@ -2,7 +2,7 @@ import { Server as NetServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import { ServerToClientEvents, ClientToServerEvents, InterServerEvents, SocketData } from '@/types/socket';
 import connectDB from './mongodb';
-import RoomModel from '@/models/Room';
+import RoomModel from '@/models/room';
 import MessageModel from '@/models/Message';
 
 export type SocketServer = SocketIOServer<
