@@ -1,6 +1,6 @@
-"use client";
+ "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useSocket } from "@/hooks/useSocket";
 import { useRoom } from "@/hooks/useRoom";
@@ -8,7 +8,13 @@ import { Message } from "@/types/message";
 import RoomHeader from "@/components/room/RoomHeader";
 import TextEditor from "@/components/room/TextEditor";
 import ChatPanel from "@/components/room/ChatPanel";
-import { Loader2, Lock, AlertCircle } from "lucide-react";
+import {
+  Loader2,
+  Lock,
+  AlertCircle,
+  MessageSquare,
+  FileText,
+} from "lucide-react";
 import { nanoid } from "nanoid";
 import {
   Card,
@@ -22,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function RoomPage() {
   const params = useParams();
@@ -37,9 +44,10 @@ export default function RoomPage() {
   const [username] = useState(() => `User-${nanoid(4)}`);
   const [textContent, setTextContent] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
-  // Removed hasJoined state in favor of ref
+  const [hasJoined, setHasJoined] = useState(false);
   const [roomDeleted, setRoomDeleted] = useState(false);
   const [deletionMessage, setDeletionMessage] = useState("");
+  const [connectionError, setConnectionError] = useState("");
 
   // Password verification state
   const [password, setPassword] = useState(urlPassword || "");
@@ -47,18 +55,28 @@ export default function RoomPage() {
   const [verifying, setVerifying] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
 
+  // Mobile view state
+  const [activeTab, setActiveTab] = useState<"editor" | "chat">("editor");
+
+  // Monitor connection status
+  useEffect(() => {
+    if (!isConnected && hasJoined) {
+      setConnectionError("Connection lost. Reconnecting...");
+    } else {
+      setConnectionError("");
+    }
+  }, [isConnected, hasJoined]);
+
   // Check if room requires password and verify
   useEffect(() => {
     if (!room) return;
 
     const verifyAccess = async () => {
-      // If room is public, no verification needed
       if (!room.isPrivate) {
         setIsVerified(true);
         return;
       }
 
-      // If we have password from URL, verify it
       if (urlPassword) {
         setVerifying(true);
         try {
@@ -145,35 +163,27 @@ export default function RoomPage() {
     }
   }, [room]);
 
-  const isJoinedRef = useRef(false);
-
-  // Reset joined status on disconnect
+  // Join room via socket with retry logic
   useEffect(() => {
-    if (!isConnected) {
-      isJoinedRef.current = false;
-    }
-  }, [isConnected]);
+    if (!socket || !isConnected || !roomId || hasJoined || !isVerified) return;
 
-  // Join room via socket
-  useEffect(() => {
-    if (!socket || !isConnected || !roomId || !isVerified) return;
+    const joinRoom = () => {
+      console.log(`🔌 Joining room ${roomId} as ${username}`);
+      socket.emit("room:join", {
+        roomId,
+        userId,
+        username,
+        password: room?.isPrivate ? password : undefined,
+      });
+      setHasJoined(true);
+    };
 
-    // If already joined to this room with this socket, don't join again
-    if (isJoinedRef.current) return;
-
-    console.log(`🔌 Joining room ${roomId} as ${username}`);
-    socket.emit("room:join", {
-      roomId,
-      userId,
-      username,
-      password: room?.isPrivate ? password : undefined,
-    });
-    isJoinedRef.current = true;
+    // Join immediately if connected
+    joinRoom();
 
     return () => {
-      // Optional cleanup if needed
-      if (socket && isConnected) {
-        // socket.emit("room:leave", { roomId, userId });
+      if (socket && hasJoined) {
+        socket.emit("room:leave", { roomId, userId });
       }
     };
   }, [
@@ -182,6 +192,7 @@ export default function RoomPage() {
     roomId,
     userId,
     username,
+    hasJoined,
     isVerified,
     room,
     password,
@@ -193,13 +204,7 @@ export default function RoomPage() {
 
     const handleNewMessage = (message: Message) => {
       console.log("📨 New message received:", message);
-      setMessages((prev) => {
-        // Prevent duplicates
-        if (prev.some((m) => m._id === message._id)) {
-          return prev;
-        }
-        return [...prev, message];
-      });
+      setMessages((prev) => [...prev, message]);
     };
 
     const handleTextUpdate = ({
@@ -218,29 +223,51 @@ export default function RoomPage() {
         data?.message || "This room has been deleted by the admin."
       );
 
-      // Redirect after 3 seconds
       setTimeout(() => {
         router.push("/rooms");
       }, 3000);
     };
 
     const handleError = (data: { message: string }) => {
-      console.error("❌ Socket error:", data.message);
-      alert(data.message);
+      console.error("Socket error:", data.message);
+      setConnectionError(data.message);
+    };
+
+    const handleConnect = () => {
+      console.log("✅ Socket reconnected");
+      setConnectionError("");
+      // Rejoin room if we were already in it
+      if (hasJoined && roomId) {
+        socket.emit("room:join", {
+          roomId,
+          userId,
+          username,
+          password: room?.isPrivate ? password : undefined,
+        });
+      }
+    };
+
+    const handleDisconnect = () => {
+      console.log("❌ Socket disconnected");
+      setConnectionError("Connection lost. Reconnecting...");
     };
 
     socket.on("message:new", handleNewMessage);
     socket.on("text:update", handleTextUpdate);
     socket.on("room:deleted", handleRoomDeleted);
     socket.on("error", handleError);
+    socket.on("connect", handleConnect);
+    socket.on("disconnect", handleDisconnect);
 
     return () => {
       socket.off("message:new", handleNewMessage);
       socket.off("text:update", handleTextUpdate);
       socket.off("room:deleted", handleRoomDeleted);
       socket.off("error", handleError);
+      socket.off("connect", handleConnect);
+      socket.off("disconnect", handleDisconnect);
     };
-  }, [socket, router]);
+  }, [socket, router, hasJoined, roomId, userId, username, room, password]);
 
   // Handle text changes
   const handleTextChange = useCallback(
@@ -258,17 +285,18 @@ export default function RoomPage() {
     [socket, isConnected, roomId, userId]
   );
 
-  // Handle sending messages
+  // Handle sending messages with connection check
   const handleSendMessage = useCallback(
     (message: string) => {
       if (!socket || !isConnected) {
-        console.error("❌ Cannot send message: socket not connected");
-        alert("Not connected to server. Please refresh the page.");
+        setConnectionError(
+          "Not connected to server. Please wait or refresh the page."
+        );
+        console.error("Cannot send message: socket not connected");
         return;
       }
 
-      console.log(`📤 Sending message from user ${username}:`, message);
-
+      console.log(`📤 Sending message: ${message}`);
       socket.emit("message:send", {
         roomId,
         userId,
@@ -276,21 +304,16 @@ export default function RoomPage() {
         message,
       });
 
-      console.log("✅ Message emit completed");
+      // Clear any connection errors
+      setConnectionError("");
     },
     [socket, isConnected, roomId, userId, username]
   );
 
-  // Handle selecting a chat message to load into editor
-  const handleSelectMessage = useCallback((message: Message) => {
-    console.log("📋 Loading message into editor:", message._id);
-    setTextContent(message.message);
-  }, []);
-
   // Loading state
   if (isLoading || verifying) {
     return (
-      <div className="h-screen flex items-center justify-center">
+      <div className="h-screen flex items-center justify-center p-4">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
           <p className="text-muted-foreground">
@@ -330,18 +353,15 @@ export default function RoomPage() {
   // Error state
   if (isError || !room) {
     return (
-      <div className="h-screen flex items-center justify-center">
+      <div className="h-screen flex items-center justify-center p-4">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Room Not Found</h1>
           <p className="text-muted-foreground mb-4">
             This room does not exist or has expired.
           </p>
-          <button
-            onClick={() => router.push("/rooms")}
-            className="text-primary hover:underline"
-          >
+          <Button onClick={() => router.push("/rooms")}>
             Browse Active Rooms
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -410,7 +430,17 @@ export default function RoomPage() {
     <div className="h-screen flex flex-col">
       <RoomHeader room={room} roomPassword={password} />
 
-      <div className="flex-1 flex overflow-hidden">
+      {/* Connection Status Alert */}
+      {connectionError && (
+        <Alert variant="destructive" className="m-4 mb-0">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Connection Issue</AlertTitle>
+          <AlertDescription>{connectionError}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Desktop View - Side by Side */}
+      <div className="hidden md:flex flex-1 overflow-hidden">
         {/* Text Editor */}
         <div className="flex-1 flex flex-col border-r">
           <TextEditor value={textContent} onChange={handleTextChange} />
@@ -422,9 +452,49 @@ export default function RoomPage() {
             messages={messages}
             currentUserId={userId}
             onSendMessage={handleSendMessage}
-            onSelectMessage={handleSelectMessage}
+            isConnected={isConnected}
           />
         </div>
+      </div>
+
+      {/* Mobile View - Tabs */}
+      <div className="md:hidden flex-1 flex flex-col overflow-hidden">
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as "editor" | "chat")}
+          className="flex-1 flex flex-col"
+        >
+          <TabsList className="grid w-full grid-cols-2 rounded-none border-b">
+            <TabsTrigger value="editor" className="gap-2">
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">Edit Live</span>
+              <span className="sm:hidden">Editor</span>
+            </TabsTrigger>
+            <TabsTrigger value="chat" className="gap-2">
+              <MessageSquare className="h-4 w-4" />
+              <span className="hidden sm:inline">Chat</span>
+              <span className="sm:hidden">Messages</span>
+              {messages.length > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
+                  {messages.length}
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="editor" className="flex-1 m-0 overflow-hidden">
+            <TextEditor value={textContent} onChange={handleTextChange} />
+          </TabsContent>
+
+          <TabsContent value="chat" className="flex-1 m-0 overflow-hidden">
+            <ChatPanel
+              messages={messages}
+              currentUserId={userId}
+              onSendMessage={handleSendMessage}
+              isConnected={isConnected}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
