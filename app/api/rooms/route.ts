@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       expiresAt,
       lastActivity: new Date(),
       isActive: true,
-      destructionTimer,
+      destructionTimer: destructionTimer || null,
       autoDelete,
       participants: [],
       textContent: '',

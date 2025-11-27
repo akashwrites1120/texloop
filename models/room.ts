@@ -20,7 +20,6 @@ const RoomSchema = new Schema<Room>(
     createdAt: {
       type: Date,
       default: Date.now,
-      required: true,
     },
     expiresAt: {
       type: Date,
@@ -29,12 +28,10 @@ const RoomSchema = new Schema<Room>(
     lastActivity: {
       type: Date,
       default: Date.now,
-      required: true,
     },
     isActive: {
       type: Boolean,
       default: true,
-      required: true,
     },
     destructionTimer: {
       type: Number,
@@ -43,17 +40,14 @@ const RoomSchema = new Schema<Room>(
     autoDelete: {
       type: Boolean,
       default: true,
-      required: true,
     },
     participants: {
       type: [String],
       default: [],
-      required: true,
     },
     textContent: {
       type: String,
       default: '',
-      required: true,
     },
   },
   {
