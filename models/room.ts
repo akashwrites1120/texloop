@@ -1,5 +1,5 @@
-import mongoose, { Schema, Model } from 'mongoose';
-import { Room } from '@/types/room';
+import mongoose, { Schema, Model } from "mongoose";
+import { Room } from "@/types/room";
 
 const RoomSchema = new Schema<Room>(
   {
@@ -47,7 +47,7 @@ const RoomSchema = new Schema<Room>(
     },
     textContent: {
       type: String,
-      default: '',
+      default: "",
     },
     isPrivate: {
       type: Boolean,
@@ -65,8 +65,19 @@ const RoomSchema = new Schema<Room>(
 
 // Index for cleanup queries
 RoomSchema.index({ lastActivity: 1, isActive: 1 });
-RoomSchema.index({ expiresAt: 1 });
+RoomSchema.index({ expiresAt: 1, isActive: 1 });
 
-const RoomModel: Model<Room> = mongoose.models.Room || mongoose.model<Room>('Room', RoomSchema);
+// TTL index - MongoDB will automatically delete documents when expiresAt is reached
+// This only works when expiresAt is set and isActive is true
+RoomSchema.index(
+  { expiresAt: 1 },
+  {
+    expireAfterSeconds: 0,
+    partialFilterExpression: { expiresAt: { $exists: true }, isActive: true },
+  }
+);
+
+const RoomModel: Model<Room> =
+  mongoose.models.Room || mongoose.model<Room>("Room", RoomSchema);
 
 export default RoomModel;

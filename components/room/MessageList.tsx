@@ -35,12 +35,12 @@ export default function MessageList({
   };
 
   const isMessageLong = (text: string) => {
-    return text.split('\n').length > 4 || text.length > 200;
+    return text.split("\n").length > 4 || text.length > 200;
   };
 
   if (messages.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center p-4">
+      <div className="h-full flex items-center justify-center p-4">
         <p className="text-sm text-muted-foreground text-center">
           No messages yet. Start the conversation!
         </p>
@@ -49,8 +49,8 @@ export default function MessageList({
   }
 
   return (
-    <div 
-      className="flex-1 p-3 sm:p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50" 
+    <div
+      className="h-full p-3 sm:p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50"
       ref={scrollRef}
       style={{ overscrollBehavior: "contain" }}
     >
@@ -61,10 +61,7 @@ export default function MessageList({
 
           if (isSystem) {
             return (
-              <div
-                key={message._id}
-                className="flex justify-center py-1"
-              >
+              <div key={message._id} className="flex justify-center py-1">
                 <div className="bg-muted/50 px-3 py-1 rounded-full">
                   <p className="text-[10px] xs:text-xs text-muted-foreground text-center">
                     {message.message}
@@ -83,7 +80,7 @@ export default function MessageList({
               )}
             >
               {/* Avatar */}
-              <Avatar className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0">
+              <Avatar className="h-7 w-7 sm:h-8 sm:w-8 shrink-0">
                 <AvatarFallback
                   className={cn(
                     "text-[10px] xs:text-xs",
@@ -118,7 +115,7 @@ export default function MessageList({
                   )}
                   onClick={() => onSelectMessage && onSelectMessage(message)}
                 >
-                  <p 
+                  <p
                     className={cn(
                       "text-xs sm:text-sm whitespace-pre-wrap break-words leading-relaxed",
                       isMessageLong(message.message) && "line-clamp-4"
@@ -126,7 +123,7 @@ export default function MessageList({
                   >
                     {message.message}
                   </p>
-                  
+
                   {/* Show More Button */}
                   {isMessageLong(message.message) && (
                     <button
@@ -140,7 +137,7 @@ export default function MessageList({
                       Show more
                     </button>
                   )}
-                  
+
                   {/* Timestamp */}
                   <p
                     className={cn(

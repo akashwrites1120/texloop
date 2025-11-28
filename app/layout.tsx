@@ -1,13 +1,14 @@
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import './globals.css';
-import { SWRConfig } from 'swr';
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import { SWRConfig } from "swr";
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'TextShare Live - Real-time Text Collaboration',
-  description: 'Share and collaborate on text in real-time with temporary rooms. No signup required.',
+  title: "TextShare Live - Real-time Text Collaboration",
+  description:
+    "Share and collaborate on text in real-time with temporary rooms. No signup required.",
 };
 
 export default function RootLayout({

@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import MessageModel from '@/models/Message';
-import RoomModel from '@/models/Room';
-import { CreateMessageInput } from '@/types/message';
+import { NextRequest, NextResponse } from "next/server";
+import connectDB from "@/lib/mongodb";
+import MessageModel from "@/models/Message";
+import RoomModel from "@/models/Room";
+import { CreateMessageInput } from "@/types/message";
 
 // GET all messages for a room
 export async function GET(
@@ -11,14 +11,14 @@ export async function GET(
 ) {
   try {
     await connectDB();
-    
+
     const { roomId } = await params;
 
     // Verify room exists
     const room = await RoomModel.findOne({ roomId });
     if (!room) {
       return NextResponse.json(
-        { success: false, error: 'Room not found' },
+        { success: false, error: "Room not found" },
         { status: 404 }
       );
     }
@@ -32,9 +32,9 @@ export async function GET(
       messages,
     });
   } catch (error) {
-    console.error('Error fetching messages:', error);
+    console.error("Error fetching messages:", error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch messages' },
+      { success: false, error: "Failed to fetch messages" },
       { status: 500 }
     );
   }
@@ -47,21 +47,21 @@ export async function POST(
 ) {
   try {
     await connectDB();
-    
+
     const { roomId } = await params;
 
     const body: CreateMessageInput = await request.json();
-    const { userId, username, message, type = 'text' } = body;
+    const { userId, username, message, type = "text" } = body;
 
     // Verify room exists and is active
-    const room = await RoomModel.findOne({ 
+    const room = await RoomModel.findOne({
       roomId,
-      isActive: true 
+      isActive: true,
     });
 
     if (!room) {
       return NextResponse.json(
-        { success: false, error: 'Room not found or inactive' },
+        { success: false, error: "Room not found or inactive" },
         { status: 404 }
       );
     }
@@ -77,19 +77,19 @@ export async function POST(
     });
 
     // Update room last activity
-    await RoomModel.updateOne(
-      { roomId },
-      { lastActivity: new Date() }
-    );
+    await RoomModel.updateOne({ roomId }, { lastActivity: new Date() });
 
-    return NextResponse.json({
-      success: true,
-      message: newMessage,
-    }, { status: 201 });
-  } catch (error) {
-    console.error('Error creating message:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to create message' },
+      {
+        success: true,
+        message: newMessage,
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("Error creating message:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to create message" },
       { status: 500 }
     );
   }

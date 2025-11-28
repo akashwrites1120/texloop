@@ -23,6 +23,25 @@ export async function POST(request: NextRequest) {
     // Generate unique room ID
     const roomId = body.name || `${nanoid(8)}-${nanoid(4)}`;
 
+    // Check if room with this name already exists (if name is provided)
+    if (body.name) {
+      const existingRoom = await RoomModel.findOne({
+        roomId: body.name,
+        isActive: true,
+      });
+
+      if (existingRoom) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "Room with this name already exists. Please choose another name.",
+          },
+          { status: 409 } // 409 Conflict
+        );
+      }
+    }
+
     // Hash the password
     const passwordHash = await hashPassword(body.password);
 
@@ -33,30 +52,45 @@ export async function POST(request: NextRequest) {
       expiresAt.setHours(expiresAt.getHours() + body.destructionTimer);
     }
 
-    // Create room
-    const room = await RoomModel.create({
-      roomId,
-      name: body.name,
-      createdBy: "anonymous", // You can add user ID here if you have auth
-      createdAt: new Date(),
-      expiresAt,
-      lastActivity: new Date(),
-      isActive: true,
-      destructionTimer: body.destructionTimer,
-      autoDelete: body.autoDelete,
-      participants: [],
-      textContent: "",
-      isPrivate: body.isPrivate,
-      passwordHash,
-    });
+    // Create room with error handling for concurrent creation
+    try {
+      const room = await RoomModel.create({
+        roomId,
+        name: body.name,
+        createdBy: "anonymous", // You can add user ID here if you have auth
+        createdAt: new Date(),
+        expiresAt,
+        lastActivity: new Date(),
+        isActive: true,
+        destructionTimer: body.destructionTimer,
+        autoDelete: body.autoDelete,
+        participants: [],
+        textContent: "",
+        isPrivate: body.isPrivate,
+        passwordHash,
+      });
 
-    // Don't send password hash to client
-    const { passwordHash: _, ...roomWithoutPassword } = room.toObject();
+      // Don't send password hash to client
+      const { passwordHash: _, ...roomWithoutPassword } = room.toObject();
 
-    return NextResponse.json({
-      success: true,
-      room: roomWithoutPassword,
-    });
+      return NextResponse.json({
+        success: true,
+        room: roomWithoutPassword,
+      });
+    } catch (createError: any) {
+      // Handle duplicate key error (concurrent creation)
+      if (createError.code === 11000) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "Room with this name already exists. Please choose another name.",
+          },
+          { status: 409 }
+        );
+      }
+      throw createError;
+    }
   } catch (error) {
     console.error("Error creating room:", error);
     return NextResponse.json(
@@ -66,12 +100,22 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET - List all active rooms
+// GET - List all active rooms (excluding expired ones)
 export async function GET() {
   try {
     await connectDB();
 
-    const rooms = await RoomModel.find({ isActive: true })
+    const now = new Date();
+
+    // Find active rooms that haven't expired
+    const rooms = await RoomModel.find({
+      isActive: true,
+      $or: [
+        { expiresAt: { $exists: false } }, // No expiration set
+        { expiresAt: null }, // Expiration is null
+        { expiresAt: { $gt: now } }, // Not yet expired
+      ],
+    })
       .select("-passwordHash")
       .sort({ createdAt: -1 })
       .limit(50)

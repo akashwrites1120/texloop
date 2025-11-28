@@ -10,7 +10,10 @@ interface MessageInputProps {
   disabled?: boolean;
 }
 
-export default function MessageInput({ onSend, disabled = false }: MessageInputProps) {
+export default function MessageInput({
+  onSend,
+  disabled = false,
+}: MessageInputProps) {
   const [message, setMessage] = useState("");
 
   const handleSend = () => {
@@ -30,7 +33,7 @@ export default function MessageInput({ onSend, disabled = false }: MessageInputP
   };
 
   return (
-    <div className="p-2 sm:p-3 border-t bg-background shrink-0">
+    <div className="p-2 sm:p-3 border-t bg-background">
       <div className="flex gap-2 items-end">
         <Textarea
           value={message}
@@ -38,7 +41,7 @@ export default function MessageInput({ onSend, disabled = false }: MessageInputP
           onKeyDown={handleKeyDown}
           placeholder="Type a message..."
           disabled={disabled}
-          className="min-h-[2.5rem] sm:min-h-[3rem] max-h-[6rem] resize-none text-xs sm:text-sm flex-1"
+          className="min-h-10 sm:min-h-12 max-h-24 resize-none text-xs sm:text-sm flex-1"
           rows={1}
           style={{ overflowWrap: "break-word", wordBreak: "break-word" }}
         />
@@ -46,7 +49,7 @@ export default function MessageInput({ onSend, disabled = false }: MessageInputP
           onClick={handleSend}
           disabled={!message.trim() || disabled}
           size="icon"
-          className="h-10 w-10 sm:h-12 sm:w-12 shrink-0 flex-shrink-0"
+          className="h-10 w-10 sm:h-12 sm:w-12 shrink-0"
         >
           <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </Button>

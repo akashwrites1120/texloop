@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { MessageSquare, Github } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import Link from "next/link";
+import { MessageSquare, Github } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function Navbar() {
   return (

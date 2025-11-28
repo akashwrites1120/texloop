@@ -71,7 +71,7 @@ app.prepare().then(() => {
         if (room.isPrivate && password) {
           const isValid = await verifyPassword(
             password as string,
-            room.passwordHash
+            room.passwordHash || ""
           );
           if (!isValid) {
             socket.emit("error", { message: "Incorrect password" });
@@ -238,6 +238,44 @@ app.prepare().then(() => {
       }
     });
   });
+
+  // Periodic cleanup service - runs every minute
+  const setupCleanupService = async () => {
+    const { CleanupService } = await import("./lib/cleanup-service");
+
+    const runCleanup = async () => {
+      console.log("🧹 Running periodic cleanup...");
+
+      // Callback to notify clients when a room is deleted
+      const notifyCallback = async (roomId: string) => {
+        if (io) {
+          io.to(roomId).emit("room:deleted", {
+            message: "This room has expired and been automatically deleted.",
+          });
+
+          // Disconnect all sockets in this room
+          const sockets = await io.in(roomId).fetchSockets();
+          for (const socket of sockets) {
+            socket.leave(roomId);
+          }
+        }
+      };
+
+      // Cleanup expired rooms
+      await CleanupService.cleanupExpiredRooms(notifyCallback);
+
+      // Optionally cleanup inactive rooms (24 hours of inactivity)
+      // await CleanupService.cleanupInactiveRooms(24, notifyCallback);
+    };
+
+    // Run cleanup every minute
+    setInterval(runCleanup, 60 * 1000);
+
+    // Run cleanup on startup
+    runCleanup();
+  };
+
+  setupCleanupService();
 
   httpServer
     .once("error", (err) => {

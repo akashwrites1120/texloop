@@ -101,26 +101,31 @@ export async function DELETE(
       );
     }
 
-    // Mark room as inactive
-    await RoomModel.updateOne({ roomId }, { isActive: false });
+    // Use cleanup service for proper deletion
+    const { CleanupService } = await import("@/lib/cleanup-service");
 
-    // Delete all messages in the room
-    await MessageModel.deleteMany({ roomId });
+    const notifyCallback = async (roomId: string) => {
+      try {
+        await fetch(
+          `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/socket/room-deleted`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ roomId }),
+          }
+        );
+      } catch (error) {
+        console.error("Error notifying socket server:", error);
+      }
+    };
 
-    // Notify socket server to disconnect all users
-    // We'll use a separate API endpoint for this
-    try {
-      await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/socket/room-deleted`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ roomId }),
-        }
+    const result = await CleanupService.deleteRoom(roomId, notifyCallback);
+
+    if (!result.success) {
+      return NextResponse.json(
+        { success: false, error: result.error || "Failed to delete room" },
+        { status: 500 }
       );
-    } catch (socketError) {
-      console.error("Error notifying socket server:", socketError);
-      // Continue even if socket notification fails
     }
 
     return NextResponse.json({

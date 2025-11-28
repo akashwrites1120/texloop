@@ -23,7 +23,7 @@ export default function ChatPanel({
   isConnected = true,
 }: ChatPanelProps) {
   return (
-    <Card className="flex flex-col h-full border-l-0 md:border-l rounded-none">
+    <Card className="flex flex-col h-full border-l-0 md:border-l rounded-none overflow-hidden">
       {/* Compact Header - matching TextEditor style */}
       <div className="px-3 py-2 sm:px-4 sm:py-2.5 border-b bg-muted/30 shrink-0">
         <div className="flex items-center justify-between gap-2">
@@ -52,13 +52,19 @@ export default function ChatPanel({
         </div>
       </div>
 
-      <MessageList 
-        messages={messages} 
-        currentUserId={currentUserId}
-        onSelectMessage={onSelectMessage}
-      />
+      {/* Message List - flex-1 with overflow-hidden to enable scrolling */}
+      <div className="flex-1 overflow-hidden">
+        <MessageList
+          messages={messages}
+          currentUserId={currentUserId}
+          onSelectMessage={onSelectMessage}
+        />
+      </div>
 
-      <MessageInput onSend={onSendMessage} disabled={!isConnected} />
+      {/* Message Input - shrink-0 to prevent compression */}
+      <div className="shrink-0">
+        <MessageInput onSend={onSendMessage} disabled={!isConnected} />
+      </div>
     </Card>
   );
 }
