@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -14,6 +14,7 @@ import {
   AlertCircle,
   MessageSquare,
   FileText,
+  ChevronLeft,
 } from "lucide-react";
 import { nanoid } from "nanoid";
 import {
@@ -57,6 +58,7 @@ export default function RoomPage() {
 
   // Mobile view state
   const [activeTab, setActiveTab] = useState<"editor" | "chat">("editor");
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Monitor connection status
   useEffect(() => {
@@ -178,7 +180,6 @@ export default function RoomPage() {
       setHasJoined(true);
     };
 
-    // Join immediately if connected
     joinRoom();
 
     return () => {
@@ -205,6 +206,11 @@ export default function RoomPage() {
     const handleNewMessage = (message: Message) => {
       console.log("📨 New message received:", message);
       setMessages((prev) => [...prev, message]);
+      
+      // Increment unread count if not on chat tab (mobile)
+      if (activeTab !== "chat" && window.innerWidth < 768) {
+        setUnreadCount((prev) => prev + 1);
+      }
     };
 
     const handleTextUpdate = ({
@@ -236,7 +242,6 @@ export default function RoomPage() {
     const handleConnect = () => {
       console.log("✅ Socket reconnected");
       setConnectionError("");
-      // Rejoin room if we were already in it
       if (hasJoined && roomId) {
         socket.emit("room:join", {
           roomId,
@@ -267,7 +272,14 @@ export default function RoomPage() {
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
     };
-  }, [socket, router, hasJoined, roomId, userId, username, room, password]);
+  }, [socket, router, hasJoined, roomId, userId, username, room, password, activeTab]);
+
+  // Reset unread count when switching to chat tab
+  useEffect(() => {
+    if (activeTab === "chat") {
+      setUnreadCount(0);
+    }
+  }, [activeTab]);
 
   // Handle text changes
   const handleTextChange = useCallback(
@@ -304,7 +316,6 @@ export default function RoomPage() {
         message,
       });
 
-      // Clear any connection errors
       setConnectionError("");
     },
     [socket, isConnected, roomId, userId, username]
@@ -313,10 +324,13 @@ export default function RoomPage() {
   // Loading state
   if (isLoading || verifying) {
     return (
-      <div className="h-screen flex items-center justify-center p-4">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+        <div className="text-center space-y-4">
+          <div className="relative inline-block">
+            <div className="absolute inset-0 blur-xl bg-primary/20 rounded-full animate-pulse" />
+            <Loader2 className="h-10 w-10 sm:h-12 sm:w-12 animate-spin text-primary relative" />
+          </div>
+          <p className="text-sm sm:text-base text-muted-foreground font-medium">
             {verifying ? "Verifying access..." : "Loading room..."}
           </p>
         </div>
@@ -327,21 +341,21 @@ export default function RoomPage() {
   // Room deleted state
   if (roomDeleted) {
     return (
-      <div className="h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+        <Card className="w-full max-w-md shadow-lg">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive">
-              <AlertCircle className="h-5 w-5" />
-              Room Deleted
+            <CardTitle className="flex items-center gap-2 text-destructive text-lg sm:text-xl">
+              <AlertCircle className="h-5 w-5 shrink-0" />
+              <span>Room Deleted</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Room No Longer Available</AlertTitle>
-              <AlertDescription>{deletionMessage}</AlertDescription>
+              <AlertDescription className="text-sm">{deletionMessage}</AlertDescription>
             </Alert>
-            <p className="text-sm text-muted-foreground mt-4">
+            <p className="text-sm text-muted-foreground">
               Redirecting to rooms list...
             </p>
           </CardContent>
@@ -353,16 +367,21 @@ export default function RoomPage() {
   // Error state
   if (isError || !room) {
     return (
-      <div className="h-screen flex items-center justify-center p-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Room Not Found</h1>
-          <p className="text-muted-foreground mb-4">
-            This room does not exist or has expired.
-          </p>
-          <Button onClick={() => router.push("/rooms")}>
-            Browse Active Rooms
-          </Button>
-        </div>
+      <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+        <Card className="w-full max-w-md shadow-lg text-center">
+          <CardHeader>
+            <CardTitle className="text-xl sm:text-2xl">Room Not Found</CardTitle>
+            <CardDescription className="text-sm">
+              This room does not exist or has expired.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => router.push("/rooms")} size="lg" className="w-full sm:w-auto">
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              Browse Active Rooms
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -370,21 +389,21 @@ export default function RoomPage() {
   // Password verification required
   if (room.isPrivate && !isVerified) {
     return (
-      <div className="h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Lock className="h-5 w-5" />
-              Private Room
-            </CardTitle>
-            <CardDescription>
+      <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+        <Card className="w-full max-w-md shadow-lg">
+          <CardHeader className="space-y-3">
+            <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <Lock className="h-6 w-6 text-primary" />
+            </div>
+            <CardTitle className="text-center text-xl sm:text-2xl">Private Room</CardTitle>
+            <CardDescription className="text-center text-sm">
               This room is password protected. Enter the password to join.
             </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-sm">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -397,25 +416,29 @@ export default function RoomPage() {
                 onKeyDown={(e) => e.key === "Enter" && handlePasswordSubmit()}
                 disabled={verifying}
                 autoFocus
+                className="h-10 sm:h-11 text-base"
               />
               {passwordError && (
-                <p className="text-sm text-destructive">{passwordError}</p>
+                <p className="text-xs sm:text-sm text-destructive flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3 shrink-0" />
+                  {passwordError}
+                </p>
               )}
             </div>
           </CardContent>
 
-          <CardFooter className="flex gap-2">
+          <CardFooter className="flex flex-col sm:flex-row gap-2">
             <Button
               variant="outline"
               onClick={() => router.push("/rooms")}
-              className="flex-1"
+              className="w-full sm:flex-1 h-10 sm:h-11"
             >
               Cancel
             </Button>
             <Button
               onClick={handlePasswordSubmit}
               disabled={verifying || !password.trim()}
-              className="flex-1"
+              className="w-full sm:flex-1 h-10 sm:h-11"
             >
               {verifying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Join Room
@@ -427,15 +450,15 @@ export default function RoomPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col bg-background">
       <RoomHeader room={room} roomPassword={password} />
 
       {/* Connection Status Alert */}
       {connectionError && (
-        <Alert variant="destructive" className="m-4 mb-0">
+        <Alert variant="destructive" className="m-2 sm:m-3 md:m-4 mb-0 rounded-lg">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Connection Issue</AlertTitle>
-          <AlertDescription>{connectionError}</AlertDescription>
+          <AlertTitle className="text-sm sm:text-base">Connection Issue</AlertTitle>
+          <AlertDescription className="text-xs sm:text-sm">{connectionError}</AlertDescription>
         </Alert>
       )}
 
@@ -447,7 +470,7 @@ export default function RoomPage() {
         </div>
 
         {/* Chat Panel */}
-        <div className="w-96 flex flex-col">
+        <div className="w-80 lg:w-130 flex flex-col">
           <ChatPanel
             messages={messages}
             currentUserId={userId}
@@ -464,29 +487,46 @@ export default function RoomPage() {
           onValueChange={(v) => setActiveTab(v as "editor" | "chat")}
           className="flex-1 flex flex-col"
         >
-          <TabsList className="grid w-full grid-cols-2 rounded-none border-b">
-            <TabsTrigger value="editor" className="gap-2">
-              <FileText className="h-4 w-4" />
-              <span className="hidden sm:inline">Edit Live</span>
-              <span className="sm:hidden">Editor</span>
+          <TabsList className="grid w-full grid-cols-2 rounded-none border-b h-11 sm:h-12 bg-background/95 backdrop-blur">
+            <TabsTrigger 
+              value="editor" 
+              className="gap-1.5 sm:gap-2 text-sm data-[state=active]:bg-muted/50"
+            >
+              <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden xs:inline">Editor</span>
+              <span className="xs:hidden">Edit</span>
             </TabsTrigger>
-            <TabsTrigger value="chat" className="gap-2">
-              <MessageSquare className="h-4 w-4" />
-              <span className="hidden sm:inline">Chat</span>
-              <span className="sm:hidden">Messages</span>
-              {messages.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
+            <TabsTrigger 
+              value="chat" 
+              className="gap-1.5 sm:gap-2 relative text-sm data-[state=active]:bg-muted/50"
+            >
+              <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden xs:inline">Chat</span>
+              <span className="xs:hidden">Talk</span>
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 min-w-[16px] h-[16px] sm:min-w-[18px] sm:h-[18px] px-1 flex items-center justify-center text-[9px] sm:text-[10px] font-bold bg-primary text-primary-foreground rounded-full animate-in zoom-in-50">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+              {messages.length > 0 && unreadCount === 0 && (
+                <span className="ml-1 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-medium bg-muted-foreground/10 text-muted-foreground rounded-full">
                   {messages.length}
                 </span>
               )}
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="editor" className="flex-1 m-0 overflow-hidden">
+          <TabsContent 
+            value="editor" 
+            className="flex-1 m-0 overflow-hidden data-[state=active]:flex data-[state=active]:flex-col"
+          >
             <TextEditor value={textContent} onChange={handleTextChange} />
           </TabsContent>
 
-          <TabsContent value="chat" className="flex-1 m-0 overflow-hidden">
+          <TabsContent 
+            value="chat" 
+            className="flex-1 m-0 overflow-hidden data-[state=active]:flex data-[state=active]:flex-col"
+          >
             <ChatPanel
               messages={messages}
               currentUserId={userId}

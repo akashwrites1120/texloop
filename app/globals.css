@@ -4,6 +4,9 @@
 /* Dark mode variant */
 @custom-variant dark (&:is(.dark *));
 
+/* Extra small breakpoint for better mobile control */
+@custom-media --xs (min-width: 475px);
+
 /* Tailwind CSS Theme mapping */
 @theme inline {
   --color-background: var(--background);
@@ -140,15 +143,39 @@
 /* GLOBAL BASE LAYER */
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border-color: hsl(var(--border));
+    outline-color: hsl(var(--ring) / 0.5);
   }
+  
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Prevent horizontal scroll on mobile */
+  html, body {
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
+  }
+
+  /* Better mobile tap targets */
+  button, a, input, textarea, select {
+    touch-action: manipulation;
+  }
+
+  /* Mobile viewport height fix */
+  @supports (height: 100dvh) {
+    .h-screen {
+      height: 100dvh;
+    }
   }
 }
 
-/* Utilities */
+/* Mobile-first Utilities */
 @layer utilities {
+  /* Scrollbar utilities */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -157,14 +184,21 @@
     scrollbar-width: none;
   }
 
-  /* Custom Scrollbar Styles */
+  /* Custom Scrollbar Styles - Thinner on mobile */
   .scrollbar-thin {
     scrollbar-width: thin;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
+  }
+
+  @media (min-width: 640px) {
+    .scrollbar-thin::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
   }
 
   .scrollbar-thin::-webkit-scrollbar-track {
@@ -195,4 +229,120 @@
   .scrollbar-thumb-muted-foreground\/20::-webkit-scrollbar-thumb {
     background: hsl(var(--muted-foreground) / 0.2);
   }
+
+  /* Safe area insets for mobile notches */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Touch-friendly spacing */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Backdrop blur utilities */
+  .backdrop-blur-glass {
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+  }
+
+  /* Mobile-optimized text */
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Component-specific mobile optimizations */
+@layer components {
+  /* Mobile-optimized buttons */
+  .btn-mobile {
+    height: 2.75rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    font-size: 0.875rem;
+  }
+
+  @media (min-width: 640px) {
+    .btn-mobile {
+      height: 2.5rem;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+      font-size: 1rem;
+    }
+  }
+
+  /* Mobile input fields */
+  .input-mobile {
+    height: 2.75rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  @media (min-width: 640px) {
+    .input-mobile {
+      height: 2.5rem;
+      font-size: 0.875rem;
+    }
+  }
+}
+
+/* Animation improvements */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+/* Focus visible improvements for accessibility */
+*:focus-visible {
+  outline-width: 2px;
+  outline-offset: 2px;
+  outline-color: hsl(var(--ring));
+}
+
+/* Prevent text selection on interactive elements */
+button, .select-none {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Improve tap highlight color on mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
 }
