@@ -19,7 +19,7 @@ export default function RoomsPage() {
   }, [rooms, searchQuery]);
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto lg:px-20 md:px-16 px-4 py-8">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold">Active Rooms</h1>

@@ -1,5 +1,5 @@
-import RoomModel from "@/models/Room";
-import MessageModel from "@/models/Message";
+import RoomModel from "@/models/room";
+import MessageModel from "@/models/message";
 
 /**
  * Cleanup service for expired and inactive rooms

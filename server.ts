@@ -8,8 +8,8 @@ loadEnvConfig(process.cwd());
 import { Server } from "socket.io";
 import mongoose from "mongoose";
 
-import RoomModel from "./models/Room";
-import MessageModel from "./models/Message";
+import RoomModel from "./models/room";
+import MessageModel from "./models/message";
 import { verifyPassword } from "./lib/encryption";
 
 const dev = process.env.NODE_ENV !== "production";

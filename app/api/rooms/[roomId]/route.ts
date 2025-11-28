@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
-import RoomModel from "@/models/Room";
-import MessageModel from "@/models/Message";
+import RoomModel from "@/models/room";
+import MessageModel from "@/models/message";
 import { verifyPassword } from "@/lib/encryption";
 import { DeleteRoomInput } from "@/types/room";
 
