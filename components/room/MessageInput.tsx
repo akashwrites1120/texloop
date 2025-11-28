@@ -7,14 +7,15 @@ import { Send } from "lucide-react";
 
 interface MessageInputProps {
   onSend: (message: string) => void;
+  disabled?: boolean;
 }
 
-export default function MessageInput({ onSend }: MessageInputProps) {
+export default function MessageInput({ onSend, disabled = false }: MessageInputProps) {
   const [message, setMessage] = useState("");
 
   const handleSend = () => {
     const trimmedMessage = message.trim();
-    if (trimmedMessage) {
+    if (trimmedMessage && !disabled) {
       console.log("Sending message:", trimmedMessage);
       onSend(trimmedMessage);
       setMessage("");
@@ -29,27 +30,29 @@ export default function MessageInput({ onSend }: MessageInputProps) {
   };
 
   return (
-    <div className="p-3 md:p-4 border-t bg-background">
-      <div className="flex gap-2">
+    <div className="p-2 sm:p-3 border-t bg-background shrink-0">
+      <div className="flex gap-2 items-end">
         <Textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Type a message... (Enter to send, Shift+Enter for new line)"
-          className="min-h-12 md:min-h-[60px] max-h-[120px] resize-none text-sm md:text-base"
-          rows={2}
+          placeholder="Type a message..."
+          disabled={disabled}
+          className="min-h-[2.5rem] sm:min-h-[3rem] max-h-[6rem] resize-none text-xs sm:text-sm flex-1"
+          rows={1}
+          style={{ overflowWrap: "break-word", wordBreak: "break-word" }}
         />
         <Button
           onClick={handleSend}
-          disabled={!message.trim()}
+          disabled={!message.trim() || disabled}
           size="icon"
-          className="h-12 w-12 md:h-[60px] md:w-[60px] shrink-0"
+          className="h-10 w-10 sm:h-12 sm:w-12 shrink-0 flex-shrink-0"
         >
-          <Send className="h-4 w-4" />
+          <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </Button>
       </div>
-      <p className="text-xs text-muted-foreground mt-2">
-        Click on any message to view it in the editor
+      <p className="text-[9px] xs:text-[10px] text-muted-foreground mt-1.5 hidden sm:block">
+        Press Enter to send, Shift+Enter for new line
       </p>
     </div>
   );

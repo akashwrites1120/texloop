@@ -60,6 +60,9 @@ export default function RoomPage() {
   const [activeTab, setActiveTab] = useState<"editor" | "chat">("editor");
   const [unreadCount, setUnreadCount] = useState(0);
 
+  // Live sync toggle - OFF by default
+  const [liveSyncEnabled, setLiveSyncEnabled] = useState(false);
+
   // Monitor connection status
   useEffect(() => {
     if (!isConnected && hasJoined) {
@@ -165,7 +168,7 @@ export default function RoomPage() {
     }
   }, [room]);
 
-  // Join room via socket with retry logic
+  // Join room via socket
   useEffect(() => {
     if (!socket || !isConnected || !roomId || hasJoined || !isVerified) return;
 
@@ -218,8 +221,13 @@ export default function RoomPage() {
     }: {
       textContent: string;
     }) => {
-      console.log("📝 Text update received");
-      setTextContent(newText);
+      // Only update if live sync is enabled
+      if (liveSyncEnabled) {
+        console.log("📝 Text update received (live sync enabled)");
+        setTextContent(newText);
+      } else {
+        console.log("📝 Text update ignored (live sync disabled)");
+      }
     };
 
     const handleRoomDeleted = (data?: { message?: string }) => {
@@ -272,7 +280,7 @@ export default function RoomPage() {
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
     };
-  }, [socket, router, hasJoined, roomId, userId, username, room, password, activeTab]);
+  }, [socket, router, hasJoined, roomId, userId, username, room, password, activeTab, liveSyncEnabled]);
 
   // Reset unread count when switching to chat tab
   useEffect(() => {
@@ -286,7 +294,8 @@ export default function RoomPage() {
     (newText: string) => {
       setTextContent(newText);
 
-      if (socket && isConnected) {
+      // Only broadcast if live sync is enabled
+      if (socket && isConnected && liveSyncEnabled) {
         socket.emit("text:change", {
           roomId,
           textContent: newText,
@@ -294,10 +303,10 @@ export default function RoomPage() {
         });
       }
     },
-    [socket, isConnected, roomId, userId]
+    [socket, isConnected, roomId, userId, liveSyncEnabled]
   );
 
-  // Handle sending messages with connection check
+  // Handle sending messages
   const handleSendMessage = useCallback(
     (message: string) => {
       if (!socket || !isConnected) {
@@ -320,6 +329,17 @@ export default function RoomPage() {
     },
     [socket, isConnected, roomId, userId, username]
   );
+
+  // Handle message click - load message content into editor
+  const handleSelectMessage = useCallback((message: Message) => {
+    if (message.type !== "system") {
+      setTextContent(message.message);
+      // Switch to editor tab on mobile
+      if (window.innerWidth < 768) {
+        setActiveTab("editor");
+      }
+    }
+  }, []);
 
   // Loading state
   if (isLoading || verifying) {
@@ -466,15 +486,21 @@ export default function RoomPage() {
       <div className="hidden md:flex flex-1 overflow-hidden">
         {/* Text Editor */}
         <div className="flex-1 flex flex-col border-r">
-          <TextEditor value={textContent} onChange={handleTextChange} />
+          <TextEditor 
+            value={textContent} 
+            onChange={handleTextChange}
+            liveSyncEnabled={liveSyncEnabled}
+            onLiveSyncToggle={setLiveSyncEnabled}
+          />
         </div>
 
         {/* Chat Panel */}
-        <div className="w-80 lg:w-130 flex flex-col">
+        <div className="w-80 lg:w-96 flex flex-col">
           <ChatPanel
             messages={messages}
             currentUserId={userId}
             onSendMessage={handleSendMessage}
+            onSelectMessage={handleSelectMessage}
             isConnected={isConnected}
           />
         </div>
@@ -487,7 +513,7 @@ export default function RoomPage() {
           onValueChange={(v) => setActiveTab(v as "editor" | "chat")}
           className="flex-1 flex flex-col"
         >
-          <TabsList className="grid w-full grid-cols-2 rounded-none border-b h-11 sm:h-12 bg-background/95 backdrop-blur">
+          <TabsList className="grid w-full grid-cols-2 rounded-none border-b h-11 sm:h-12 bg-background/95 backdrop-blur shrink-0">
             <TabsTrigger 
               value="editor" 
               className="gap-1.5 sm:gap-2 text-sm data-[state=active]:bg-muted/50"
@@ -520,7 +546,12 @@ export default function RoomPage() {
             value="editor" 
             className="flex-1 m-0 overflow-hidden data-[state=active]:flex data-[state=active]:flex-col"
           >
-            <TextEditor value={textContent} onChange={handleTextChange} />
+            <TextEditor 
+              value={textContent} 
+              onChange={handleTextChange}
+              liveSyncEnabled={liveSyncEnabled}
+              onLiveSyncToggle={setLiveSyncEnabled}
+            />
           </TabsContent>
 
           <TabsContent 
@@ -531,6 +562,7 @@ export default function RoomPage() {
               messages={messages}
               currentUserId={userId}
               onSendMessage={handleSendMessage}
+              onSelectMessage={handleSelectMessage}
               isConnected={isConnected}
             />
           </TabsContent>

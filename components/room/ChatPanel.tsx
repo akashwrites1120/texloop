@@ -11,6 +11,7 @@ interface ChatPanelProps {
   messages: Message[];
   currentUserId: string;
   onSendMessage: (message: string) => void;
+  onSelectMessage?: (message: Message) => void;
   isConnected?: boolean;
 }
 
@@ -18,38 +19,44 @@ export default function ChatPanel({
   messages,
   currentUserId,
   onSendMessage,
+  onSelectMessage,
   isConnected = true,
 }: ChatPanelProps) {
   return (
     <Card className="flex flex-col h-full border-l-0 md:border-l rounded-none">
-      <div className="p-4 border-b bg-muted/30">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-semibold text-sm">Chat</h3>
-            <p className="text-xs text-muted-foreground">
-              {messages.length} {messages.length === 1 ? "message" : "messages"}
-            </p>
+      {/* Compact Header - matching TextEditor style */}
+      <div className="px-3 py-2 sm:px-4 sm:py-2.5 border-b bg-muted/30 shrink-0">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-xs sm:text-sm">Chat</h3>
+            <span className="text-[10px] xs:text-xs text-muted-foreground">
+              {messages.length} {messages.length === 1 ? "msg" : "msgs"}
+            </span>
           </div>
           <Badge
             variant={isConnected ? "default" : "destructive"}
-            className="gap-1 text-xs"
+            className="gap-1 text-[9px] sm:text-[10px] h-5 px-1.5"
           >
             {isConnected ? (
               <>
-                <Wifi className="h-3 w-3" />
-                <span className="hidden sm:inline">Connected</span>
+                <Wifi className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                <span className="hidden xs:inline">Online</span>
               </>
             ) : (
               <>
-                <WifiOff className="h-3 w-3" />
-                <span className="hidden sm:inline">Offline</span>
+                <WifiOff className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                <span className="hidden xs:inline">Offline</span>
               </>
             )}
           </Badge>
         </div>
       </div>
 
-      <MessageList messages={messages} currentUserId={currentUserId} />
+      <MessageList 
+        messages={messages} 
+        currentUserId={currentUserId}
+        onSelectMessage={onSelectMessage}
+      />
 
       <MessageInput onSend={onSendMessage} disabled={!isConnected} />
     </Card>

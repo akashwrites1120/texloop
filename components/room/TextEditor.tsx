@@ -3,23 +3,29 @@
 import { useEffect, useRef, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { MAX_TEXT_LENGTH } from "@/lib/constants";
-import { CheckCircle2, AlertCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle, Wifi, WifiOff } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 interface TextEditorProps {
   value: string;
   onChange: (value: string) => void;
   readOnly?: boolean;
+  liveSyncEnabled: boolean;
+  onLiveSyncToggle: (enabled: boolean) => void;
 }
 
 export default function TextEditor({
   value,
   onChange,
   readOnly,
+  liveSyncEnabled,
+  onLiveSyncToggle,
 }: TextEditorProps) {
   const [charCount, setCharCount] = useState(0);
   const [lineCount, setLineCount] = useState(1);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const gutterRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setCharCount(value.length);
@@ -45,47 +51,60 @@ export default function TextEditor({
 
   return (
     <div className="flex flex-col h-full bg-background">
-      {/* Header */}
-      <div className="px-3 py-2.5 sm:px-4 sm:py-3 border-b bg-muted/30">
+      {/* Header with Live Sync Toggle */}
+      <div className="px-3 py-2 sm:px-4 sm:py-2.5 border-b bg-muted/30 shrink-0">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-sm sm:text-base flex items-center gap-2 truncate">
-              Live Editor
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] sm:text-xs font-medium bg-green-500/10 text-green-600 dark:text-green-400 rounded-full shrink-0">
-                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                <span className="hidden xs:inline">Live</span>
+          {/* Left side - Title and Sync Status */}
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <h3 className="font-semibold text-xs sm:text-sm shrink-0">Live Editor</h3>
+            <div className="flex items-center gap-1.5">
+              {liveSyncEnabled ? (
+                <Wifi className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-green-500 shrink-0" />
+              ) : (
+                <WifiOff className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground shrink-0" />
+              )}
+              <span className="text-[9px] sm:text-[10px] text-muted-foreground hidden xs:inline">
+                Live Sync {liveSyncEnabled ? "On" : "Off"}
               </span>
-            </h3>
-            <p className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">
-              Real-time collaborative editing
-            </p>
+            </div>
           </div>
-          <div className="text-right shrink-0">
-            <div className="text-[10px] xs:text-xs sm:text-sm font-medium text-muted-foreground">
+
+          {/* Right side - Toggle and Line Count */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <Switch
+              checked={liveSyncEnabled}
+              onCheckedChange={onLiveSyncToggle}
+              className="scale-75 sm:scale-100"
+            />
+            <div className="text-[10px] xs:text-xs text-muted-foreground">
               {lineCount.toLocaleString()} {lineCount === 1 ? "line" : "lines"}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Editor Area with single scrollbar */}
-      <div className="flex-1 flex overflow-hidden relative">
-        {/* Line Numbers - scrollable but hidden scrollbar */}
+      {/* Editor Area */}
+      <div 
+        ref={containerRef}
+        className="flex-1 flex overflow-hidden relative"
+      >
+        {/* Line Numbers - hidden scrollbar, syncs with textarea */}
         <div
           ref={gutterRef}
-          className="w-10 xs:w-12 sm:w-14 bg-muted/40 border-r text-muted-foreground/70 font-mono text-[10px] xs:text-xs px-2 py-3 sm:py-4 overflow-y-scroll no-scrollbar select-none shrink-0"
+          className="w-9 xs:w-10 sm:w-12 bg-muted/40 border-r text-muted-foreground/70 font-mono text-[10px] xs:text-xs px-1.5 sm:px-2 py-3 sm:py-4 overflow-y-scroll no-scrollbar select-none shrink-0"
+          style={{ overscrollBehavior: "contain" }}
         >
           {lineNumbers.map((n) => (
             <div
               key={n}
-              className="leading-[1.5rem] xs:leading-[1.6rem] sm:leading-6 text-right pr-1 sm:pr-2"
+              className="leading-[1.5rem] xs:leading-[1.6rem] sm:leading-6 text-right pr-1"
             >
               {n}
             </div>
           ))}
         </div>
 
-        {/* Text Area with visible scrollbar on the right */}
+        {/* Text Area - visible scrollbar */}
         <div className="flex-1 relative overflow-hidden">
           <Textarea
             ref={textareaRef}
@@ -93,15 +112,18 @@ export default function TextEditor({
             onChange={handleChange}
             onScroll={handleScroll}
             readOnly={readOnly}
-            placeholder="Start typing... Changes are synced in real-time."
+            placeholder="Start typing... Toggle Live Sync to collaborate in real-time."
             className="w-full h-full resize-none border-0 focus-visible:ring-0 font-mono text-xs xs:text-[13px] sm:text-sm p-3 sm:p-4 leading-[1.5rem] xs:leading-[1.6rem] sm:leading-6 whitespace-pre-wrap overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50 bg-transparent placeholder:text-muted-foreground/40"
-            style={{ fieldSizing: "fixed" } as React.CSSProperties}
+            style={{ 
+              fieldSizing: "fixed",
+              overscrollBehavior: "contain"
+            } as React.CSSProperties}
           />
         </div>
       </div>
 
       {/* Footer with Progress Bar */}
-      <div className="border-t bg-muted/30">
+      <div className="border-t bg-muted/30 shrink-0">
         {/* Character Usage Progress Bar */}
         <div className="h-0.5 sm:h-1 bg-muted/50 relative overflow-hidden">
           <div
@@ -116,7 +138,7 @@ export default function TextEditor({
 
         {/* Stats */}
         <div className="flex items-center justify-between gap-2 px-3 py-1.5 sm:px-4 sm:py-2 text-[10px] xs:text-xs">
-          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <span className="flex items-center gap-1 font-medium">
               {isNearLimit ? (
                 <AlertCircle className="w-3 h-3 text-yellow-500 shrink-0" />
@@ -139,7 +161,7 @@ export default function TextEditor({
               {usagePercent.toFixed(1)}% used
             </span>
           </div>
-          <span className="text-muted-foreground/60 hidden sm:inline">
+          <span className="text-muted-foreground/60 hidden xs:inline text-[10px]">
             Auto-save
           </span>
         </div>

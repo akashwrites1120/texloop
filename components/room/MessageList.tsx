@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import { Message } from "@/types/message";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -35,9 +34,23 @@ export default function MessageList({
       .slice(0, 2);
   };
 
+  if (messages.length === 0) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-4">
+        <p className="text-sm text-muted-foreground text-center">
+          No messages yet. Start the conversation!
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex-1 p-4 overflow-y-auto" ref={scrollRef}>
-      <div className="space-y-4">
+    <div 
+      className="flex-1 p-3 sm:p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50" 
+      ref={scrollRef}
+      style={{ overscrollBehavior: "contain" }}
+    >
+      <div className="space-y-3 sm:space-y-4">
         {messages.map((message) => {
           const isSystem = message.type === "system";
           const isOwn = message.userId === currentUserId;
@@ -46,9 +59,13 @@ export default function MessageList({
             return (
               <div
                 key={message._id}
-                className="text-center text-sm text-muted-foreground py-2"
+                className="flex justify-center py-1"
               >
-                {message.message}
+                <div className="bg-muted/50 px-3 py-1 rounded-full">
+                  <p className="text-[10px] xs:text-xs text-muted-foreground text-center">
+                    {message.message}
+                  </p>
+                </div>
               </div>
             );
           }
@@ -56,12 +73,16 @@ export default function MessageList({
           return (
             <div
               key={message._id}
-              className={cn("flex gap-3", isOwn && "flex-row-reverse")}
+              className={cn(
+                "flex gap-2 items-end",
+                isOwn ? "flex-row-reverse" : "flex-row"
+              )}
             >
-              <Avatar className="h-8 w-8 flex-shrink-0">
+              {/* Avatar */}
+              <Avatar className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0">
                 <AvatarFallback
                   className={cn(
-                    "text-xs",
+                    "text-[10px] xs:text-xs",
                     isOwn && "bg-primary text-primary-foreground"
                   )}
                 >
@@ -69,28 +90,45 @@ export default function MessageList({
                 </AvatarFallback>
               </Avatar>
 
-              <div className={cn("flex-1 space-y-1", isOwn && "items-end")}>
-                <div
-                  className={cn(
-                    "flex items-baseline gap-2 text-xs",
-                    isOwn && "flex-row-reverse"
-                  )}
-                >
-                  <span className="font-medium">{message.username}</span>
-                  <span className="text-muted-foreground">
-                    {format(new Date(message.timestamp), "HH:mm")}
+              {/* Message Bubble */}
+              <div
+                className={cn(
+                  "flex flex-col max-w-[75%] sm:max-w-[70%]",
+                  isOwn ? "items-end" : "items-start"
+                )}
+              >
+                {/* Username - only show for others' messages */}
+                {!isOwn && (
+                  <span className="text-[10px] xs:text-xs font-medium text-muted-foreground mb-0.5 px-1">
+                    {message.username}
                   </span>
-                </div>
+                )}
+
+                {/* Message Content */}
                 <div
                   className={cn(
-                    "inline-block px-3 py-2 rounded-lg max-w-[80%] break-words cursor-pointer hover:opacity-90",
-                    isOwn ? "bg-primary text-primary-foreground" : "bg-muted"
+                    "px-3 py-2 sm:px-3 sm:py-2 rounded-2xl cursor-pointer transition-all hover:opacity-90 active:scale-[0.98] break-words",
+                    isOwn
+                      ? "bg-primary text-primary-foreground rounded-br-md"
+                      : "bg-muted rounded-bl-md"
                   )}
                   onClick={() => onSelectMessage && onSelectMessage(message)}
                 >
-                  <div className="line-clamp-4 whitespace-pre-wrap">
+                  <p className="text-xs sm:text-sm whitespace-pre-wrap break-words leading-relaxed">
                     {message.message}
-                  </div>
+                  </p>
+                  
+                  {/* Timestamp */}
+                  <p
+                    className={cn(
+                      "text-[9px] xs:text-[10px] mt-1 text-right",
+                      isOwn
+                        ? "text-primary-foreground/70"
+                        : "text-muted-foreground/70"
+                    )}
+                  >
+                    {format(new Date(message.timestamp), "HH:mm")}
+                  </p>
                 </div>
               </div>
             </div>
