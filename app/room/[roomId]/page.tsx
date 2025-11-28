@@ -495,7 +495,7 @@ export default function RoomPage() {
         </div>
 
         {/* Chat Panel */}
-        <div className="w-80 lg:w-96 flex flex-col">
+        <div className="w-90 lg:w-120 flex flex-col">
           <ChatPanel
             messages={messages}
             currentUserId={userId}

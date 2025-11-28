@@ -34,6 +34,10 @@ export default function MessageList({
       .slice(0, 2);
   };
 
+  const isMessageLong = (text: string) => {
+    return text.split('\n').length > 4 || text.length > 200;
+  };
+
   if (messages.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center p-4">
@@ -114,9 +118,28 @@ export default function MessageList({
                   )}
                   onClick={() => onSelectMessage && onSelectMessage(message)}
                 >
-                  <p className="text-xs sm:text-sm whitespace-pre-wrap break-words leading-relaxed">
+                  <p 
+                    className={cn(
+                      "text-xs sm:text-sm whitespace-pre-wrap break-words leading-relaxed",
+                      isMessageLong(message.message) && "line-clamp-4"
+                    )}
+                  >
                     {message.message}
                   </p>
+                  
+                  {/* Show More Button */}
+                  {isMessageLong(message.message) && (
+                    <button
+                      className={cn(
+                        "text-[10px] xs:text-xs mt-1 font-medium hover:underline",
+                        isOwn
+                          ? "text-primary-foreground/80"
+                          : "text-muted-foreground"
+                      )}
+                    >
+                      Show more
+                    </button>
+                  )}
                   
                   {/* Timestamp */}
                   <p
