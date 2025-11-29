@@ -87,13 +87,13 @@ export default function RoomCard({ room }: RoomCardProps) {
           <Button
             size="lg"
             className="
-              w-full font-medium
+              w-full font-medium group
               transition-all duration-200
               hover:scale-[1.01] hover:shadow-md
             "
           >
             Join Room
-            <ArrowRight className="ml-2 h-4 w-4" />
+            <ArrowRight className="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
           </Button>
         </Link>
       </CardContent>

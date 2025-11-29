@@ -94,10 +94,10 @@ export default function JoinPage() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <div className="flex-1 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
+      <div className="flex-1 flex items-center justify-center p-4 ">
+        <Card className="w-full max-w-md pt-4 pb-6">
           <CardHeader>
-            <CardTitle>Join Room</CardTitle>
+            <CardTitle className="text-3xl">Join Room</CardTitle>
             <CardDescription>
               Enter a Room ID to join and start collaborating.
             </CardDescription>

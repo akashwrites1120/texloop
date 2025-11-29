@@ -23,16 +23,17 @@ export default function Navbar() {
               <Button variant="default">Active Rooms</Button>
             </Link>
             <Link href="/join">
-              <Button variant="outline">Join Room</Button>
+              <Button variant="outline" >Join Room</Button>
             </Link>
             <a
               href="https://github.com/akashwrites1120"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden md:block"
+              className="md:block"
             >
-              <Button variant="ghost" size="icon">
-                <Github className="h-5 w-5" />
+              <Button variant="ghost" size="icon" className=" rounded-full transition-all duration-100
+              hover:bg-black hover:text-white" >
+                <Github className="h-5 w-5 " />
               </Button>
             </a>
           </div>
