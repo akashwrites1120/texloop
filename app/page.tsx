@@ -22,7 +22,7 @@ export default function HomePage() {
             Share Text in
             <span className="text-slate-700 block"> Real-Time</span>
           </h1>
-          <p className="text-xl text-muted-foreground mb-14 max-w-2xl mx-auto">
+          <p className="text-lg text-slate-500 mb-14 max-w-2xl mx-auto">
             Collaborate instantly with temporary rooms. No signup required.
             Perfect for quick text sharing and team collaboration.
           </p>
@@ -50,7 +50,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="mt-16 text-sm text-muted-foreground">
+          <div className="mt-16 text-sm text-slate-500">
             No account needed • Temporary rooms • Free forever
           </div>
         </div>

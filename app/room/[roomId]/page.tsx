@@ -209,7 +209,7 @@ export default function RoomPage() {
     const handleNewMessage = (message: Message) => {
       console.log("📨 New message received:", message);
       setMessages((prev) => [...prev, message]);
-      
+
       // Increment unread count if not on chat tab (mobile)
       if (activeTab !== "chat" && window.innerWidth < 768) {
         setUnreadCount((prev) => prev + 1);
@@ -280,7 +280,18 @@ export default function RoomPage() {
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
     };
-  }, [socket, router, hasJoined, roomId, userId, username, room, password, activeTab, liveSyncEnabled]);
+  }, [
+    socket,
+    router,
+    hasJoined,
+    roomId,
+    userId,
+    username,
+    room,
+    password,
+    activeTab,
+    liveSyncEnabled,
+  ]);
 
   // Reset unread count when switching to chat tab
   useEffect(() => {
@@ -373,7 +384,9 @@ export default function RoomPage() {
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Room No Longer Available</AlertTitle>
-              <AlertDescription className="text-sm">{deletionMessage}</AlertDescription>
+              <AlertDescription className="text-sm">
+                {deletionMessage}
+              </AlertDescription>
             </Alert>
             <p className="text-sm text-muted-foreground">
               Redirecting to rooms list...
@@ -387,21 +400,77 @@ export default function RoomPage() {
   // Error state
   if (isError || !room) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-        <Card className="w-full max-w-md shadow-lg text-center">
-          <CardHeader>
-            <CardTitle className="text-xl sm:text-2xl">Room Not Found</CardTitle>
-            <CardDescription className="text-sm">
-              This room does not exist or has expired.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => router.push("/rooms")} size="lg" className="w-full sm:w-auto">
-              <ChevronLeft className="h-4 w-4 mr-2" />
-              Browse Active Rooms
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <div className="w-full max-w-md">
+          {/* Icon Container */}
+          <div className="flex justify-center mb-6">
+            <div className="relative">
+              <div className="absolute inset-0 bg-red-100 rounded-full blur-xl opacity-60 animate-pulse"></div>
+              <div className="relative bg-white rounded-full p-6 shadow-lg border border-red-100">
+                <AlertCircle
+                  className="h-12 w-12 text-red-500"
+                  strokeWidth={2}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Content Card */}
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+            {/* Header */}
+            <div className="px-6 pt-8 pb-6 text-center border-b border-slate-100">
+              <h1 className="text-4xl font-bold text-slate-900 mb-3 tracking-tight">
+                Room Not Found
+              </h1>
+              <p className="text-slate-600 text-base leading-relaxed mx-auto">
+                The room you're looking for doesn't exist or may have expired.
+                Please check the link or browse available rooms.
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="px-6 py-6 bg-slate-50/50">
+              <Button
+                onClick={() => router.push("/rooms")}
+                className="
+                  w-full 
+                  flex 
+                  items-center 
+                  justify-center 
+                  gap-2 
+                  px-6 
+                  py-6
+                  bg-slate-900 
+                  hover:bg-slate-800 
+                  text-white 
+                  font-medium 
+                  rounded-xl 
+                  transition-all 
+                  duration-200 
+                  shadow-lg 
+                  shadow-slate-900/10 
+                  hover:shadow-xl 
+                  hover:shadow-slate-900/20
+                  active:scale-[0.98]
+                "
+              >
+                <ChevronLeft className="h-5 w-5" strokeWidth={2.5} />
+                <span>Browse Active Rooms</span>
+              </Button>
+            </div>
+          </div>
+
+          {/* Help Text */}
+          <p className="text-center text-sm text-slate-500 mt-6">
+            Need help?{" "}
+            <a
+              href="github.com/akashwrites1120"
+              className="text-slate-700 hover:text-slate-900 font-medium underline underline-offset-2"
+            >
+              Contact Support
+            </a>
+          </p>
+        </div>
       </div>
     );
   }
@@ -415,7 +484,9 @@ export default function RoomPage() {
             <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
               <Lock className="h-6 w-6 text-primary" />
             </div>
-            <CardTitle className="text-center text-xl sm:text-2xl">Private Room</CardTitle>
+            <CardTitle className="text-center text-xl sm:text-2xl">
+              Private Room
+            </CardTitle>
             <CardDescription className="text-center text-sm">
               This room is password protected. Enter the password to join.
             </CardDescription>
@@ -423,7 +494,9 @@ export default function RoomPage() {
 
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm">Password</Label>
+              <Label htmlFor="password" className="text-sm">
+                Password
+              </Label>
               <Input
                 id="password"
                 type="password"
@@ -475,10 +548,17 @@ export default function RoomPage() {
 
       {/* Connection Status Alert */}
       {connectionError && (
-        <Alert variant="destructive" className="m-2 sm:m-3 md:m-4 mb-0 rounded-lg">
+        <Alert
+          variant="destructive"
+          className="m-2 sm:m-3 md:m-4 mb-0 rounded-lg"
+        >
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle className="text-sm sm:text-base">Connection Issue</AlertTitle>
-          <AlertDescription className="text-xs sm:text-sm">{connectionError}</AlertDescription>
+          <AlertTitle className="text-sm sm:text-base">
+            Connection Issue
+          </AlertTitle>
+          <AlertDescription className="text-xs sm:text-sm">
+            {connectionError}
+          </AlertDescription>
         </Alert>
       )}
 
@@ -486,8 +566,8 @@ export default function RoomPage() {
       <div className="hidden md:flex flex-1 overflow-hidden">
         {/* Text Editor */}
         <div className="flex-1 flex flex-col border-r">
-          <TextEditor 
-            value={textContent} 
+          <TextEditor
+            value={textContent}
             onChange={handleTextChange}
             liveSyncEnabled={liveSyncEnabled}
             onLiveSyncToggle={setLiveSyncEnabled}
@@ -514,16 +594,16 @@ export default function RoomPage() {
           className="flex-1 flex flex-col"
         >
           <TabsList className="grid w-full grid-cols-2 rounded-none border-b h-11 sm:h-12 bg-background/95 backdrop-blur shrink-0">
-            <TabsTrigger 
-              value="editor" 
+            <TabsTrigger
+              value="editor"
               className="gap-1.5 sm:gap-2 text-sm data-[state=active]:bg-muted/50"
             >
               <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span className="hidden xs:inline">Editor</span>
               <span className="xs:hidden">Edit</span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="chat" 
+            <TabsTrigger
+              value="chat"
               className="gap-1.5 sm:gap-2 relative text-sm data-[state=active]:bg-muted/50"
             >
               <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -542,20 +622,20 @@ export default function RoomPage() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent 
-            value="editor" 
+          <TabsContent
+            value="editor"
             className="flex-1 m-0 overflow-hidden data-[state=active]:flex data-[state=active]:flex-col"
           >
-            <TextEditor 
-              value={textContent} 
+            <TextEditor
+              value={textContent}
               onChange={handleTextChange}
               liveSyncEnabled={liveSyncEnabled}
               onLiveSyncToggle={setLiveSyncEnabled}
             />
           </TabsContent>
 
-          <TabsContent 
-            value="chat" 
+          <TabsContent
+            value="chat"
             className="flex-1 m-0 overflow-hidden data-[state=active]:flex data-[state=active]:flex-col"
           >
             <ChatPanel

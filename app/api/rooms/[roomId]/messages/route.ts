@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
-import MessageModel from "@/models/Message";
-import RoomModel from "@/models/Room";
+import MessageModel from "@/models/message";
+import RoomModel from "@/models/room";
 import { CreateMessageInput } from "@/types/message";
 
 // GET all messages for a room
