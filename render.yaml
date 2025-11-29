@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: texloop
+    runtime: node
+    region: oregon # Change to your preferred region (oregon, frankfurt, singapore, etc.)
+    plan: free # Change to 'starter' or higher for production
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false # You'll add this in Render dashboard
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+    healthCheckPath: /
+    autoDeploy: true
