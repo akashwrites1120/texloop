@@ -40,7 +40,7 @@ export default function MessageList({
 
   if (messages.length === 0) {
     return (
-      <div className="h-full flex items-center justify-center p-4">
+      <div className="absolute inset-0 flex items-center justify-center p-4">
         <p className="text-sm text-muted-foreground text-center">
           No messages yet. Start the conversation!
         </p>
@@ -50,7 +50,7 @@ export default function MessageList({
 
   return (
     <div
-      className="h-full min-h-0 p-3 sm:p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50"
+      className="absolute inset-0 p-3 sm:p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50"
       ref={scrollRef}
       style={{ overscrollBehavior: "contain" }}
     >

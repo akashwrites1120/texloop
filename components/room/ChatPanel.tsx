@@ -53,7 +53,8 @@ export default function ChatPanel({
       </div>
 
       {/* Message List - flex-1 with overflow-hidden to enable scrolling */}
-      <div className="flex-1 overflow-hidden">
+      {/* Message List - flex-1 with relative positioning for absolute child */}
+      <div className="flex-1 min-h-0 relative overflow-hidden bg-background">
         <MessageList
           messages={messages}
           currentUserId={currentUserId}
