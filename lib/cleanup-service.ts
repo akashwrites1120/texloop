@@ -29,9 +29,6 @@ export class CleanupService {
 
       // 2. Delete all messages associated with this room
       const messageDeleteResult = await MessageModel.deleteMany({ roomId });
-      console.log(
-        `🗑️ Deleted ${messageDeleteResult.deletedCount} messages from room ${roomId}`
-      );
 
       // 3. Notify all connected clients via socket (if callback provided)
       if (notifyCallback) {
@@ -40,11 +37,10 @@ export class CleanupService {
 
       // 4. Actually delete the room document
       await RoomModel.deleteOne({ roomId });
-      console.log(`✅ Room ${roomId} completely deleted`);
 
       return { success: true };
     } catch (error) {
-      console.error(`❌ Error deleting room ${roomId}:`, error);
+      console.error(`Error deleting room ${roomId}:`, error);
       return { success: false, error: "Failed to delete room" };
     }
   }
@@ -65,8 +61,6 @@ export class CleanupService {
         expiresAt: { $exists: true, $lte: now },
       }).lean();
 
-      console.log(`🧹 Found ${expiredRooms.length} expired rooms to cleanup`);
-
       let cleanedCount = 0;
       for (const room of expiredRooms) {
         const result = await this.deleteRoom(room.roomId, notifyCallback);
@@ -75,13 +69,9 @@ export class CleanupService {
         }
       }
 
-      if (cleanedCount > 0) {
-        console.log(`✅ Cleaned up ${cleanedCount} expired rooms`);
-      }
-
       return cleanedCount;
     } catch (error) {
-      console.error("❌ Error during cleanup:", error);
+      console.error("Error during cleanup:", error);
       return 0;
     }
   }
@@ -105,8 +95,6 @@ export class CleanupService {
         participants: { $size: 0 }, // Only delete if no one is in the room
       }).lean();
 
-      console.log(`🧹 Found ${inactiveRooms.length} inactive rooms to cleanup`);
-
       let cleanedCount = 0;
       for (const room of inactiveRooms) {
         const result = await this.deleteRoom(room.roomId, notifyCallback);
@@ -115,13 +103,9 @@ export class CleanupService {
         }
       }
 
-      if (cleanedCount > 0) {
-        console.log(`✅ Cleaned up ${cleanedCount} inactive rooms`);
-      }
-
       return cleanedCount;
     } catch (error) {
-      console.error("❌ Error during inactive room cleanup:", error);
+      console.error("Error during inactive room cleanup:", error);
       return 0;
     }
   }

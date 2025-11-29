@@ -1,19 +1,20 @@
-'use client';
+"use client";
 
-import { useState, useMemo } from 'react';
-import { useRooms } from '@/hooks/useRoom';
-import RoomList from '@/components/dashboard/RoomList';
-import CreateRoomDialog from '@/components/dashboard/CreateRoomDialog';
-import SearchRooms from '@/components/dashboard/SearchRooms';
+import { useState, useMemo } from "react";
+import { useRooms } from "@/hooks/useRoom";
+import RoomList from "@/components/dashboard/RoomList";
+import CreateRoomDialog from "@/components/dashboard/CreateRoomDialog";
+import SearchRooms from "@/components/dashboard/SearchRooms";
+import { Room } from "@/types/room";
 
 export default function RoomsPage() {
   const { rooms, isLoading } = useRooms();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
   const filteredRooms = useMemo(() => {
     if (!searchQuery) return rooms;
-    
-    return rooms.filter((room) =>
+
+    return rooms.filter((room: Room) =>
       room.roomId.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [rooms, searchQuery]);

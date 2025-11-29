@@ -9,7 +9,7 @@ export const DESTRUCTION_TIMERS = [
 
 export const INACTIVITY_THRESHOLD_HOURS = 24;
 
-export const APP_NAME = 'TextShare Live';
+export const APP_NAME = 'TexLoop';
 
 export const MAX_MESSAGE_LENGTH = 1000;
 export const MAX_TEXT_LENGTH = 50000;

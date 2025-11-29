@@ -15,6 +15,7 @@ import {
   encryptMessage,
   decryptMessage,
 } from "./lib/encryption";
+import { rateLimiter } from "./lib/rate-limiter";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
@@ -27,10 +28,9 @@ const handle = app.getRequestHandler();
 if (process.env.MONGODB_URI) {
   mongoose
     .connect(process.env.MONGODB_URI)
-    .then(() => console.log("✅ MongoDB connected"))
-    .catch((err) => console.error("❌ MongoDB connection error:", err));
+    .catch((err) => console.error("MongoDB connection error:", err));
 } else {
-  console.warn("⚠️ MONGODB_URI is not defined");
+  console.error("MONGODB_URI is not defined");
 }
 
 app.prepare().then(() => {
@@ -51,7 +51,12 @@ app.prepare().then(() => {
     cors: {
       origin: process.env.NEXT_PUBLIC_APP_URL || `http://localhost:${port}`,
       methods: ["GET", "POST"],
+      credentials: true,
     },
+    transports: ["websocket", "polling"],
+    allowEIO3: true,
+    pingTimeout: 60000,
+    pingInterval: 25000,
   });
 
   // Store io instance globally for API routes
@@ -62,6 +67,14 @@ app.prepare().then(() => {
     // Join room
     socket.on("room:join", async ({ roomId, userId, username, password }) => {
       try {
+        // Rate limiting: 20 join attempts per minute per socket
+        if (rateLimiter.isRateLimited(`join:${socket.id}`, 20, 60000)) {
+          socket.emit("error", {
+            message: "Too many join attempts. Please wait a moment.",
+          });
+          return;
+        }
+
         const room = await RoomModel.findOne({ roomId, isActive: true });
         if (!room) {
           socket.emit("room:deleted", {
@@ -155,6 +168,14 @@ app.prepare().then(() => {
     // Send message
     socket.on("message:send", async ({ roomId, userId, username, message }) => {
       try {
+        // Rate limiting: 30 messages per minute per socket
+        if (rateLimiter.isRateLimited(`message:${socket.id}`, 30, 60000)) {
+          socket.emit("error", {
+            message: "Too many messages. Please slow down.",
+          });
+          return;
+        }
+
         // Encrypt message before storing in database
         const encryptedMessage = encryptMessage(message);
 
@@ -275,7 +296,8 @@ app.prepare().then(() => {
       process.exit(1);
     })
     .listen(port, () => {
-      console.log(`🚀 Server ready on http://${hostname}:${port}`);
-      console.log(`🔌 Socket.IO ready on ws://${hostname}:${port}/api/socket`);
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`Server ready on http://${hostname}:${port}`);
+      }
     });
 });

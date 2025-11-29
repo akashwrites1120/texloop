@@ -8,11 +8,12 @@ export interface SocketUser {
 
 export interface ServerToClientEvents {
   "message:new": (message: Message) => void;
-  "text:update": (data: { textContent: string }) => void;
+  "text:update": (data: { textContent: string; userId?: string }) => void;
   "user:joined": (data: { userId: string; username: string }) => void;
   "user:left": (data: { userId: string; username: string }) => void;
-  "room:deleted": () => void;
+  "room:deleted": (data?: { message?: string }) => void;
   "participants:update": (participants: string[]) => void;
+  error: (data: { message: string }) => void;
 }
 
 export interface ClientToServerEvents {

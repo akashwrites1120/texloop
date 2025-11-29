@@ -19,7 +19,6 @@ export default function MessageInput({
   const handleSend = () => {
     const trimmedMessage = message.trim();
     if (trimmedMessage && !disabled) {
-      console.log("Sending message:", trimmedMessage);
       onSend(trimmedMessage);
       setMessage("");
     }

@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import RoomModel from '@/models/Room';
-import { verifyPassword } from '@/lib/encryption';
+import { NextRequest, NextResponse } from "next/server";
+import connectDB from "@/lib/mongodb";
+import RoomModel from "@/models/room";
+import { verifyPassword } from "@/lib/encryption";
 
 // POST verify room password
 export async function POST(
@@ -10,7 +10,7 @@ export async function POST(
 ) {
   try {
     await connectDB();
-    
+
     const { roomId } = await params;
     const { password } = await request.json();
 
@@ -18,7 +18,7 @@ export async function POST(
 
     if (!room) {
       return NextResponse.json(
-        { success: false, error: 'Room not found' },
+        { success: false, error: "Room not found" },
         { status: 404 }
       );
     }
@@ -26,13 +26,13 @@ export async function POST(
     if (!room.isPrivate) {
       return NextResponse.json({
         success: true,
-        message: 'Room is public, no password required',
+        message: "Room is public, no password required",
       });
     }
 
     if (!room.passwordHash) {
       return NextResponse.json(
-        { success: false, error: 'Room has no password set' },
+        { success: false, error: "Room has no password set" },
         { status: 400 }
       );
     }
@@ -41,19 +41,19 @@ export async function POST(
 
     if (!isValid) {
       return NextResponse.json(
-        { success: false, error: 'Incorrect password' },
+        { success: false, error: "Incorrect password" },
         { status: 403 }
       );
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Password verified',
+      message: "Password verified",
     });
   } catch (error) {
-    console.error('Error verifying password:', error);
+    console.error("Error verifying password:", error);
     return NextResponse.json(
-      { success: false, error: 'Failed to verify password' },
+      { success: false, error: "Failed to verify password" },
       { status: 500 }
     );
   }

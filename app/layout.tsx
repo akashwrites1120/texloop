@@ -6,7 +6,7 @@ import { SWRConfig } from "swr";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "TextShare Live - Real-time Text Collaboration",
+  title: "TexLoop - Real-time Text Collaboration",
   description:
     "Share and collaborate on text in real-time with temporary rooms. No signup required.",
 };

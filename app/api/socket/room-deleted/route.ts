@@ -27,10 +27,6 @@ export async function POST(request: NextRequest) {
       for (const socket of sockets) {
         socket.leave(roomId);
       }
-
-      console.log(
-        `🗑️ Room ${roomId} deleted, ${sockets.length} users notified`
-      );
     }
 
     return NextResponse.json({ success: true });

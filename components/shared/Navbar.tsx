@@ -14,19 +14,19 @@ export default function Navbar() {
             <div className="bg-primary text-primary-foreground p-2 rounded-lg">
               <MessageSquare className="h-5 w-5" />
             </div>
-            <span className="hidden sm:inline">TextShare Live</span>
+            <span className="hidden sm:inline">TexLoop</span>
           </Link>
 
           {/* Navigation */}
           <div className="flex items-center gap-4">
             <Link href="/rooms">
-              <Button variant="ghost">Active Rooms</Button>
+              <Button variant="default">Active Rooms</Button>
             </Link>
             <Link href="/join">
               <Button variant="outline">Join Room</Button>
             </Link>
             <a
-              href="https://github.com"
+              href="https://github.com/akashwrites1120"
               target="_blank"
               rel="noopener noreferrer"
               className="hidden md:block"

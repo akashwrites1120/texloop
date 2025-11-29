@@ -61,7 +61,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl lg:text-7xl font-bold text-gray-900 mb-6">
-              Why TextShare Live?
+              Why TexLoop?
             </h2>
             <p className="text-xl text-slate-500 max-w-2xl mx-auto">
               Everything you need for seamless real-time text collaboration
@@ -143,7 +143,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t py-4">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>© 2024 TextShare Live. Made with React, Node.js, and MongoDB.</p>
+          <p>© 2025 TexLoop. Made with Love 💖.</p>
           {/* <div className="flex items-center justify-center gap-6 mt-4">
             <Link href="/rooms" className="hover:text-foreground">
               Active Rooms

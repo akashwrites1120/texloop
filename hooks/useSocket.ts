@@ -14,30 +14,30 @@ export function useSocket() {
   const maxReconnectAttempts = 10;
 
   useEffect(() => {
-    // Initialize socket connection with better options
+    // Initialize socket connection with optimized options
     const socketInstance: TypedSocket = io(
       process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3000",
       {
         path: "/api/socket",
         addTrailingSlash: false,
-        transports: ["polling", "websocket"], // Try polling first, then upgrade to websocket
+        transports: ["polling", "websocket"], // Start with polling, upgrade to websocket
         reconnection: true,
         reconnectionAttempts: maxReconnectAttempts,
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,
         timeout: 20000,
         autoConnect: true,
+        forceNew: false,
+        multiplex: true,
       }
     );
 
     socketInstance.on("connect", () => {
-      console.log("✅ Socket connected:", socketInstance.id);
       setIsConnected(true);
       reconnectAttempts.current = 0;
     });
 
     socketInstance.on("disconnect", (reason) => {
-      console.log("❌ Socket disconnected:", reason);
       setIsConnected(false);
 
       // Auto-reconnect for certain disconnect reasons
@@ -50,34 +50,29 @@ export function useSocket() {
     });
 
     socketInstance.on("connect_error", (error) => {
-      console.error("🔴 Socket connection error:", error.message);
       reconnectAttempts.current++;
 
-      if (reconnectAttempts.current >= maxReconnectAttempts) {
-        console.error("Max reconnection attempts reached");
-        setIsConnected(false);
+      // Only log error in development after 3 failed attempts to reduce noise
+      if (
+        process.env.NODE_ENV === "development" &&
+        reconnectAttempts.current >= 3
+      ) {
+        console.error(
+          "Socket connection error after",
+          reconnectAttempts.current,
+          "attempts:",
+          error.message
+        );
       }
-    });
 
-    socketInstance.on("reconnect", (attemptNumber) => {
-      console.log(`🔄 Socket reconnected after ${attemptNumber} attempts`);
-      setIsConnected(true);
-      reconnectAttempts.current = 0;
-    });
-
-    socketInstance.on("reconnect_attempt", (attemptNumber) => {
-      console.log(
-        `🔄 Reconnection attempt ${attemptNumber}/${maxReconnectAttempts}`
-      );
-    });
-
-    socketInstance.on("reconnect_error", (error) => {
-      console.error("🔴 Reconnection error:", error.message);
-    });
-
-    socketInstance.on("reconnect_failed", () => {
-      console.error("❌ Reconnection failed after maximum attempts");
-      setIsConnected(false);
+      if (reconnectAttempts.current >= maxReconnectAttempts) {
+        setIsConnected(false);
+        if (process.env.NODE_ENV === "development") {
+          console.error(
+            "Max reconnection attempts reached. Please check your server."
+          );
+        }
+      }
     });
 
     socketRef.current = socketInstance;
@@ -85,7 +80,6 @@ export function useSocket() {
 
     // Cleanup on unmount
     return () => {
-      console.log("🧹 Cleaning up socket connection");
       socketInstance.removeAllListeners();
       socketInstance.disconnect();
     };
@@ -94,7 +88,6 @@ export function useSocket() {
   // Provide manual reconnect function
   const reconnect = () => {
     if (socketRef.current) {
-      console.log("🔄 Manual reconnection triggered");
       socketRef.current.connect();
     }
   };

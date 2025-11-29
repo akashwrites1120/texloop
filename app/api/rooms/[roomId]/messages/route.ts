@@ -4,6 +4,7 @@ import MessageModel from "@/models/message";
 import RoomModel from "@/models/room";
 import { CreateMessageInput } from "@/types/message";
 import { encryptMessage, decryptMessage } from "@/lib/encryption";
+import { rateLimit } from "@/lib/rate-limit";
 
 // GET all messages for a room
 export async function GET(
@@ -29,11 +30,21 @@ export async function GET(
       .lean();
 
     // Decrypt messages before sending to client
-    const decryptedMessages = messages.map((msg) => ({
-      ...msg,
-      message:
-        msg.type === "system" ? msg.message : decryptMessage(msg.message),
-    }));
+    const decryptedMessages = messages.map((msg) => {
+      try {
+        // If it's a system message, return as is
+        if (msg.type === "system") return msg;
+
+        // Try to decrypt
+        return {
+          ...msg,
+          message: decryptMessage(msg.message),
+        };
+      } catch (e) {
+        // If decryption fails, return original message (might be unencrypted legacy data)
+        return msg;
+      }
+    });
 
     return NextResponse.json({
       success: true,
@@ -53,6 +64,10 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ roomId: string }> }
 ) {
+  // Apply rate limiting (20 messages per minute per IP)
+  const limiter = rateLimit(request, 20, 60000);
+  if (limiter) return limiter;
+
   try {
     await connectDB();
 

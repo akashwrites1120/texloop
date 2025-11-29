@@ -141,7 +141,7 @@ export default function RoomPage() {
     }
   };
 
-  // Fetch initial messages
+  // Fetch initial messages - refetch when rejoining
   useEffect(() => {
     if (!roomId || !isVerified) return;
 
@@ -151,7 +151,6 @@ export default function RoomPage() {
         const data = await response.json();
         if (data.success) {
           setMessages(data.messages);
-          console.log(`📥 Loaded ${data.messages.length} messages`);
         }
       } catch (error) {
         console.error("Error fetching messages:", error);
@@ -159,7 +158,7 @@ export default function RoomPage() {
     };
 
     fetchMessages();
-  }, [roomId, isVerified]);
+  }, [roomId, isVerified, hasJoined]); // Added hasJoined to refetch when rejoining
 
   // Set initial text content from room
   useEffect(() => {
@@ -173,7 +172,6 @@ export default function RoomPage() {
     if (!socket || !isConnected || !roomId || hasJoined || !isVerified) return;
 
     const joinRoom = () => {
-      console.log(`🔌 Joining room ${roomId} as ${username}`);
       socket.emit("room:join", {
         roomId,
         userId,
@@ -207,7 +205,6 @@ export default function RoomPage() {
     if (!socket) return;
 
     const handleNewMessage = (message: Message) => {
-      console.log("📨 New message received:", message);
       setMessages((prev) => [...prev, message]);
 
       // Increment unread count if not on chat tab (mobile)
@@ -223,15 +220,11 @@ export default function RoomPage() {
     }) => {
       // Only update if live sync is enabled
       if (liveSyncEnabled) {
-        console.log("📝 Text update received (live sync enabled)");
         setTextContent(newText);
-      } else {
-        console.log("📝 Text update ignored (live sync disabled)");
       }
     };
 
     const handleRoomDeleted = (data?: { message?: string }) => {
-      console.log("🗑️ Room deleted event received");
       setRoomDeleted(true);
       setDeletionMessage(
         data?.message || "This room has been deleted by the admin."
@@ -248,7 +241,6 @@ export default function RoomPage() {
     };
 
     const handleConnect = () => {
-      console.log("✅ Socket reconnected");
       setConnectionError("");
       if (hasJoined && roomId) {
         socket.emit("room:join", {
@@ -261,7 +253,6 @@ export default function RoomPage() {
     };
 
     const handleDisconnect = () => {
-      console.log("❌ Socket disconnected");
       setConnectionError("Connection lost. Reconnecting...");
     };
 
@@ -328,7 +319,6 @@ export default function RoomPage() {
         return;
       }
 
-      console.log(`📤 Sending message: ${message}`);
       socket.emit("message:send", {
         roomId,
         userId,
