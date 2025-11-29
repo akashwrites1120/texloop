@@ -22,18 +22,13 @@ export function useYjsEditor({
   const ydocRef = useRef<Y.Doc | null>(null);
   const ytextRef = useRef<Y.Text | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const hasSyncedRef = useRef(false); // Track if we've received sync data
 
   useEffect(() => {
-    // Initialize Y.Doc and Y.Text
+    // Initialize Y.Doc and Y.Text only once
     if (!ydocRef.current) {
       ydocRef.current = new Y.Doc();
       ytextRef.current = ydocRef.current.getText("content");
-
-      // Set initial value
-      if (initialValue && ytextRef.current.length === 0) {
-        ytextRef.current.insert(0, initialValue);
-      }
-
       setIsInitialized(true);
     }
 
@@ -44,9 +39,10 @@ export function useYjsEditor({
         ydocRef.current = null;
         ytextRef.current = null;
         setIsInitialized(false);
+        hasSyncedRef.current = false;
       }
     };
-  }, [initialValue]);
+  }, []); // Remove initialValue from dependencies to prevent re-initialization
 
   useEffect(() => {
     if (
@@ -92,14 +88,23 @@ export function useYjsEditor({
       }
     };
 
-    // Request initial state when joining
-    socket.emit("yjs:sync-request", { roomId });
-
     // Listen for sync response with full state
     const handleSyncResponse = ({ state }: { state: number[] }) => {
       try {
         if (state && state.length > 0) {
+          // Server has state - apply it
           Y.applyUpdate(ydoc, new Uint8Array(state), "network");
+          hasSyncedRef.current = true;
+        } else if (
+          !hasSyncedRef.current &&
+          ytext.length === 0 &&
+          initialValue
+        ) {
+          // Server has no state and we haven't synced yet - initialize with local value
+          ydoc.transact(() => {
+            ytext.insert(0, initialValue);
+          });
+          hasSyncedRef.current = true;
         }
       } catch (error) {
         console.error("Error applying Y.js sync:", error);
@@ -109,13 +114,18 @@ export function useYjsEditor({
     socket.on("yjs:update", handleRemoteUpdate);
     socket.on("yjs:sync-response", handleSyncResponse);
 
+    // Request initial state when joining (only if we haven't synced yet)
+    if (!hasSyncedRef.current) {
+      socket.emit("yjs:sync-request", { roomId });
+    }
+
     return () => {
       ydoc.off("update", updateHandler);
       ytext.unobserve(textObserver);
       socket.off("yjs:update", handleRemoteUpdate);
       socket.off("yjs:sync-response", handleSyncResponse);
     };
-  }, [socket, isConnected, liveSyncEnabled, roomId, onUpdate]);
+  }, [socket, isConnected, liveSyncEnabled, roomId, onUpdate, initialValue]);
 
   const updateText = (newText: string) => {
     if (!ytextRef.current || !liveSyncEnabled) {

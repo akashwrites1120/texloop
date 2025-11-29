@@ -116,11 +116,11 @@ export default function TextEditor({
   };
 
   const handleLiveSyncToggle = (enabled: boolean) => {
-    if (enabled && roomPassword) {
-      // Show password dialog for verification when enabling
+    if (enabled) {
+      // Always show password dialog for verification when enabling
       setShowPasswordDialog(true);
     } else {
-      // No password required when turning off, or if room has no password
+      // No password required when turning off
       onLiveSyncToggle(enabled);
     }
   };
@@ -131,14 +131,23 @@ export default function TextEditor({
       return;
     }
 
-    // Compare with the plain text password that user entered to join the room
-    if (verifyPassword === roomPassword) {
+    // If room has a password (private room), verify it
+    if (roomPassword) {
+      // Compare with the plain text password that user entered to join the room
+      if (verifyPassword === roomPassword) {
+        setShowPasswordDialog(false);
+        setVerifyPassword("");
+        setPasswordError("");
+        onLiveSyncToggle(true);
+      } else {
+        setPasswordError("Incorrect password");
+      }
+    } else {
+      // Public room - just need any non-empty input as confirmation
       setShowPasswordDialog(false);
       setVerifyPassword("");
       setPasswordError("");
       onLiveSyncToggle(true);
-    } else {
-      setPasswordError("Incorrect password");
     }
   };
 
@@ -223,7 +232,7 @@ export default function TextEditor({
             onChange={handleChange}
             onScroll={handleScroll}
             readOnly={readOnly}
-            placeholder="Start typing... Toggle Live Sync to collaborate in real-time with Y.js CRDT."
+            placeholder="Start typing... Toggle Live Sync to collaborate in real-time..."
             className="w-full h-full resize-none border-0 focus-visible:ring-0 font-mono text-xs xs:text-[13px] sm:text-sm p-3 sm:p-4 leading-6 xs:leading-[1.6rem] sm:leading-6 whitespace-pre-wrap overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50 bg-transparent placeholder:text-muted-foreground/40"
             style={
               {
@@ -295,8 +304,19 @@ export default function TextEditor({
               <span>Enable Live Sync</span>
             </AlertDialogTitle>
             <AlertDialogDescription className="text-xs sm:text-sm">
-              Enter the room password to enable live editing with Y.js CRDT.
-              This allows real-time collaboration with conflict-free merging.
+              {roomPassword ? (
+                <>
+                  Enter the room password to enable live editing with Y.js CRDT.
+                  This allows real-time collaboration with conflict-free
+                  merging.
+                </>
+              ) : (
+                <>
+                  Type any confirmation text to enable live editing with Y.js
+                  CRDT. This allows real-time collaboration with conflict-free
+                  merging.
+                </>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -306,12 +326,16 @@ export default function TextEditor({
               className="flex items-center gap-2 text-sm"
             >
               <Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              Room Password
+              {roomPassword ? "Room Password" : "Confirmation"}
             </Label>
             <Input
               id="verifyPassword"
-              type="password"
-              placeholder="Enter room password"
+              type={roomPassword ? "password" : "text"}
+              placeholder={
+                roomPassword
+                  ? "Enter room password"
+                  : "Type anything to confirm"
+              }
               value={verifyPassword}
               onChange={(e) => {
                 setVerifyPassword(e.target.value);
