@@ -3,6 +3,7 @@ import connectDB from "@/lib/mongodb";
 import MessageModel from "@/models/message";
 import RoomModel from "@/models/room";
 import { CreateMessageInput } from "@/types/message";
+import { encryptMessage, decryptMessage } from "@/lib/encryption";
 
 // GET all messages for a room
 export async function GET(
@@ -27,9 +28,16 @@ export async function GET(
       .sort({ timestamp: 1 })
       .lean();
 
+    // Decrypt messages before sending to client
+    const decryptedMessages = messages.map((msg) => ({
+      ...msg,
+      message:
+        msg.type === "system" ? msg.message : decryptMessage(msg.message),
+    }));
+
     return NextResponse.json({
       success: true,
-      messages,
+      messages: decryptedMessages,
     });
   } catch (error) {
     console.error("Error fetching messages:", error);
@@ -66,12 +74,14 @@ export async function POST(
       );
     }
 
-    // Create message
+    // Encrypt message content for privacy (stored encrypted in DB)
+    const encryptedMessage = encryptMessage(message);
+
     const newMessage = await MessageModel.create({
       roomId,
       userId,
       username,
-      message,
+      message: encryptedMessage,
       type,
       timestamp: new Date(),
     });

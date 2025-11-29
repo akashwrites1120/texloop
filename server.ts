@@ -10,7 +10,11 @@ import mongoose from "mongoose";
 
 import RoomModel from "./models/room";
 import MessageModel from "./models/message";
-import { verifyPassword } from "./lib/encryption";
+import {
+  verifyPassword,
+  encryptMessage,
+  decryptMessage,
+} from "./lib/encryption";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
@@ -55,8 +59,6 @@ app.prepare().then(() => {
   global.io = io;
 
   io.on("connection", (socket) => {
-    console.log("✅ Socket connected:", socket.id);
-
     // Join room
     socket.on("room:join", async ({ roomId, userId, username, password }) => {
       try {
@@ -108,8 +110,6 @@ app.prepare().then(() => {
         if (updatedRoom) {
           io.to(roomId).emit("participants:update", updatedRoom.participants);
         }
-
-        console.log(`👤 ${username} joined room: ${roomId}`);
       } catch (error) {
         console.error("Error joining room:", error);
         socket.emit("error", { message: "Failed to join room" });
@@ -147,8 +147,6 @@ app.prepare().then(() => {
           io.to(roomId).emit("message:new", systemMessage.toObject());
           io.to(roomId).emit("participants:update", room.participants);
         }
-
-        console.log(`👋 User ${userId} left room: ${roomId}`);
       } catch (error) {
         console.error("Error leaving room:", error);
       }
@@ -157,24 +155,24 @@ app.prepare().then(() => {
     // Send message
     socket.on("message:send", async ({ roomId, userId, username, message }) => {
       try {
-        console.log(`📨 Received message in room ${roomId}:`, message);
+        // Encrypt message before storing in database
+        const encryptedMessage = encryptMessage(message);
 
         const newMessage = await MessageModel.create({
           roomId,
           userId,
           username,
-          message,
+          message: encryptedMessage,
           type: "text",
           timestamp: new Date(),
         });
 
         await RoomModel.updateOne({ roomId }, { lastActivity: new Date() });
 
-        // Broadcast to ALL users in the room (including sender)
+        // Decrypt message before broadcasting to users
         const messageObj = newMessage.toObject();
+        messageObj.message = decryptMessage(messageObj.message);
         io.to(roomId).emit("message:new", messageObj);
-
-        console.log(`💬 Message sent in ${roomId} by ${username}`);
       } catch (error) {
         console.error("Error sending message:", error);
         socket.emit("error", { message: "Failed to send message" });
@@ -194,8 +192,6 @@ app.prepare().then(() => {
 
         // Broadcast to ALL users in the room (including sender for confirmation)
         io.to(roomId).emit("text:update", { textContent });
-
-        console.log(`📝 Text updated in room ${roomId}`);
       } catch (error) {
         console.error("Error updating text:", error);
       }
@@ -231,8 +227,6 @@ app.prepare().then(() => {
             io.to(roomId).emit("participants:update", room.participants);
           }
         }
-
-        console.log("❌ Socket disconnected:", socket.id);
       } catch (error) {
         console.error("Error on disconnect:", error);
       }
@@ -244,8 +238,6 @@ app.prepare().then(() => {
     const { CleanupService } = await import("./lib/cleanup-service");
 
     const runCleanup = async () => {
-      console.log("🧹 Running periodic cleanup...");
-
       // Callback to notify clients when a room is deleted
       const notifyCallback = async (roomId: string) => {
         if (io) {

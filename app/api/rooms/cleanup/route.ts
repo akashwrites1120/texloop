@@ -1,19 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import RoomModel from '@/models/Room';
-import MessageModel from '@/models/Message';
-import { INACTIVITY_THRESHOLD_HOURS } from '@/lib/constants';
+import { NextRequest, NextResponse } from "next/server";
+import connectDB from "@/lib/mongodb";
+import RoomModel from "@/models/room";
+import MessageModel from "@/models/message";
+import { INACTIVITY_THRESHOLD_HOURS } from "@/lib/constants";
 
 // POST cleanup expired and inactive rooms
 export async function POST(request: NextRequest) {
   try {
     // Verify cron secret for security
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     const cronSecret = process.env.CRON_SECRET;
 
     if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+        { success: false, error: "Unauthorized" },
         { status: 401 }
       );
     }
@@ -40,12 +40,12 @@ export async function POST(request: NextRequest) {
       ],
     }).lean();
 
-    const roomIds = roomsToDelete.map(room => room.roomId);
+    const roomIds = roomsToDelete.map((room) => room.roomId);
 
     if (roomIds.length === 0) {
       return NextResponse.json({
         success: true,
-        message: 'No rooms to cleanup',
+        message: "No rooms to cleanup",
         deletedCount: 0,
       });
     }
@@ -60,21 +60,16 @@ export async function POST(request: NextRequest) {
       roomId: { $in: roomIds },
     });
 
-    console.log(`🗑️ Cleanup completed:
-      - Rooms deleted: ${roomsDeleted.deletedCount}
-      - Messages deleted: ${messagesDeleted.deletedCount}
-    `);
-
     return NextResponse.json({
       success: true,
-      message: 'Cleanup completed successfully',
+      message: "Cleanup completed successfully",
       deletedCount: roomsDeleted.deletedCount,
       messagesDeleted: messagesDeleted.deletedCount,
     });
   } catch (error) {
-    console.error('Error during cleanup:', error);
+    console.error("Error during cleanup:", error);
     return NextResponse.json(
-      { success: false, error: 'Cleanup failed' },
+      { success: false, error: "Cleanup failed" },
       { status: 500 }
     );
   }
@@ -83,12 +78,12 @@ export async function POST(request: NextRequest) {
 // GET cleanup status (for debugging)
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     const cronSecret = process.env.CRON_SECRET;
 
     if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+        { success: false, error: "Unauthorized" },
         { status: 401 }
       );
     }
@@ -116,9 +111,9 @@ export async function GET(request: NextRequest) {
       totalToCleanup: expiredRooms + inactiveRooms,
     });
   } catch (error) {
-    console.error('Error checking cleanup status:', error);
+    console.error("Error checking cleanup status:", error);
     return NextResponse.json(
-      { success: false, error: 'Failed to check status' },
+      { success: false, error: "Failed to check status" },
       { status: 500 }
     );
   }

@@ -28,6 +28,8 @@ export default function CreateRoomDialog() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [roomNameError, setRoomNameError] = useState("");
+  const [shakeInput, setShakeInput] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     destructionTimer: "none",
@@ -43,6 +45,8 @@ export default function CreateRoomDialog() {
       return;
     }
 
+    // Clear previous errors
+    setRoomNameError("");
     setLoading(true);
 
     try {
@@ -67,10 +71,16 @@ export default function CreateRoomDialog() {
         setOpen(false);
         router.push(`/room/${data.room.roomId}`);
       } else {
-        alert(data.error || "Failed to create room");
+        // Check if it's a room name conflict error
+        if (response.status === 409 && formData.name) {
+          setRoomNameError(data.error || "Room with this name already exists");
+          setShakeInput(true);
+          setTimeout(() => setShakeInput(false), 500);
+        } else {
+          alert(data.error || "Failed to create room");
+        }
       }
     } catch (error) {
-      console.error("Error creating room:", error);
       alert("Failed to create room");
     } finally {
       setLoading(false);
@@ -101,13 +111,24 @@ export default function CreateRoomDialog() {
               id="name"
               placeholder="e.g., project-delta-review"
               value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
+              onChange={(e) => {
+                setFormData({ ...formData, name: e.target.value });
+                setRoomNameError(""); // Clear error on change
+              }}
+              className={`${shakeInput ? "animate-shake" : ""} ${
+                roomNameError ? "border-red-500 focus-visible:ring-red-500" : ""
+              }`}
             />
-            <p className="text-sm text-muted-foreground">
-              Leave empty for auto-generated name
-            </p>
+            {roomNameError && (
+              <p className="text-sm text-red-500 font-medium">
+                {roomNameError}
+              </p>
+            )}
+            {!roomNameError && (
+              <p className="text-sm text-muted-foreground">
+                Leave empty for auto-generated name
+              </p>
+            )}
           </div>
 
           {/* Password - Required for ALL rooms */}
