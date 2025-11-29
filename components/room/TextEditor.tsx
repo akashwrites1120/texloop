@@ -61,7 +61,10 @@ export default function TextEditor({
   // Password verification state
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [verifyPassword, setVerifyPassword] = useState("");
+
   const [passwordError, setPasswordError] = useState("");
+  const [isShaking, setIsShaking] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
 
   // Get socket connection
   const { socket, isConnected } = useSocket();
@@ -125,29 +128,49 @@ export default function TextEditor({
     }
   };
 
-  const handlePasswordVerify = () => {
+  const handlePasswordVerify = async () => {
     if (!verifyPassword.trim()) {
       setPasswordError("Password is required");
+      setIsShaking(true);
+      setTimeout(() => setIsShaking(false), 500);
       return;
     }
 
-    // If room has a password (private room), verify it
-    if (roomPassword) {
-      // Compare with the plain text password that user entered to join the room
-      if (verifyPassword === roomPassword) {
+    setIsVerifying(true);
+    setPasswordError("");
+
+    try {
+      let isValid = false;
+
+      if (roomPassword) {
+        // Private room: we have the password in state, verify locally
+        isValid = verifyPassword.trim() === roomPassword;
+      } else {
+        // Public room: verify against server
+        const response = await fetch(`/api/rooms/${roomId}/verify`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: verifyPassword }),
+        });
+        const data = await response.json();
+        isValid = data.success;
+      }
+
+      if (isValid) {
         setShowPasswordDialog(false);
         setVerifyPassword("");
         setPasswordError("");
         onLiveSyncToggle(true);
       } else {
         setPasswordError("Incorrect password");
+        setIsShaking(true);
+        setTimeout(() => setIsShaking(false), 500);
       }
-    } else {
-      // Public room - just need any non-empty input as confirmation
-      setShowPasswordDialog(false);
-      setVerifyPassword("");
-      setPasswordError("");
-      onLiveSyncToggle(true);
+    } catch (error) {
+      console.error("Verification error:", error);
+      setPasswordError("Verification failed");
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -287,7 +310,7 @@ export default function TextEditor({
             </span>
           </div>
           <span className="text-muted-foreground/60 hidden xs:inline text-[10px]">
-            {liveSyncEnabled ? "Y.js CRDT" : "Auto-save"}
+            {liveSyncEnabled ? "Real-time" : "Auto-save"}
           </span>
         </div>
       </div>
@@ -304,19 +327,8 @@ export default function TextEditor({
               <span>Enable Live Sync</span>
             </AlertDialogTitle>
             <AlertDialogDescription className="text-xs sm:text-sm">
-              {roomPassword ? (
-                <>
-                  Enter the room password to enable live editing with Y.js CRDT.
-                  This allows real-time collaboration with conflict-free
-                  merging.
-                </>
-              ) : (
-                <>
-                  Type any confirmation text to enable live editing with Y.js
-                  CRDT. This allows real-time collaboration with conflict-free
-                  merging.
-                </>
-              )}
+              Enter the room password to enable live editing. This allows
+              real-time collaboration.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -326,23 +338,21 @@ export default function TextEditor({
               className="flex items-center gap-2 text-sm"
             >
               <Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              {roomPassword ? "Room Password" : "Confirmation"}
+              Room Password
             </Label>
             <Input
               id="verifyPassword"
-              type={roomPassword ? "password" : "text"}
-              placeholder={
-                roomPassword
-                  ? "Enter room password"
-                  : "Type anything to confirm"
-              }
+              type="password"
+              placeholder="Enter room password"
               value={verifyPassword}
               onChange={(e) => {
                 setVerifyPassword(e.target.value);
                 setPasswordError("");
               }}
               onKeyDown={(e) => e.key === "Enter" && handlePasswordVerify()}
-              className="h-10 sm:h-11 text-sm sm:text-base"
+              className={`h-10 sm:h-11 text-sm sm:text-base ${
+                isShaking ? "animate-shake border-destructive" : ""
+              }`}
               autoFocus
             />
             {passwordError && (
@@ -368,14 +378,35 @@ export default function TextEditor({
                 e.preventDefault();
                 handlePasswordVerify();
               }}
-              disabled={!verifyPassword.trim()}
+              disabled={!verifyPassword.trim() || isVerifying}
               className="w-full sm:w-auto"
             >
-              Enable Live Sync
+              {isVerifying ? "Verifying..." : "Enable Live Sync"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Shake Animation Style */}
+      <style jsx global>{`
+        @keyframes shake {
+          0%,
+          100% {
+            transform: translateX(0);
+          }
+          20%,
+          60% {
+            transform: translateX(-4px);
+          }
+          40%,
+          80% {
+            transform: translateX(4px);
+          }
+        }
+        .animate-shake {
+          animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+        }
+      `}</style>
     </div>
   );
 }

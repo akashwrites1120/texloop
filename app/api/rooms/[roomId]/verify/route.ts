@@ -16,6 +16,7 @@ export async function POST(
 
     const room = await RoomModel.findOne({ roomId, isActive: true });
 
+    // Check if room exists
     if (!room) {
       return NextResponse.json(
         { success: false, error: "Room not found" },
@@ -23,12 +24,8 @@ export async function POST(
       );
     }
 
-    if (!room.isPrivate) {
-      return NextResponse.json({
-        success: true,
-        message: "Room is public, no password required",
-      });
-    }
+    // Always verify password if one is provided
+    // This allows verifying admin actions even for public rooms
 
     if (!room.passwordHash) {
       return NextResponse.json(
