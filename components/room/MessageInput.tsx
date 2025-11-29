@@ -48,9 +48,9 @@ export default function MessageInput({
           onClick={handleSend}
           disabled={!message.trim() || disabled}
           size="icon"
-          className="h-10 w-10 sm:h-12 sm:w-12 shrink-0"
+          className="h-10 w-10 sm:h-12 sm:w-12 shrink-0 hover:cursor-pointer"
         >
-          <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4 " />
         </Button>
       </div>
       <p className="text-[9px] xs:text-[10px] text-muted-foreground mt-1.5 hidden sm:block">

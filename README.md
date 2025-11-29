@@ -1,36 +1,107 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ♾️ TexLoop
 
-## Getting Started
+> **Share Text in Real-Time. Collaborate Instantly.**
 
-First, run the development server:
+![TexLoop Banner](https://via.placeholder.com/1200x400?text=TexLoop+Preview)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+TexLoop is a modern, real-time text sharing and collaboration platform designed for speed and privacy. Create temporary rooms, share code or text, and chat with others instantly—no signup required.
+
+Built with **Next.js 15**, **Socket.IO**, and **MongoDB**.
+
+---
+
+## ✨ Key Features
+
+- **⚡ Real-Time Synchronization**: Type and see changes instantly across all devices using Y.js CRDT technology.
+- **🔒 Secure & Private**: Create password-protected rooms for sensitive content.
+- **💬 Live Chat**: Built-in real-time chat to discuss while you collaborate.
+- **⏱️ Ephemeral Rooms**: Set auto-destruction timers. Rooms clean up after themselves.
+- **📱 Fully Responsive**: Seamless experience on desktop, tablet, and mobile devices.
+- **🚫 No Registration**: Jump straight into a room without creating an account.
+
+## 🛠️ Tech Stack
+
+- **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) & [Shadcn/UI](https://ui.shadcn.com/)
+- **Real-time**: [Socket.IO](https://socket.io/) & [Y.js](https://github.com/yjs/yjs)
+- **Database**: [MongoDB](https://www.mongodb.com/) (with Mongoose)
+- **Icons**: [Lucide React](https://lucide.dev/)
+
+## 🚀 Getting Started
+
+Follow these steps to set up the project locally.
+
+### Prerequisites
+
+- Node.js 18+
+- MongoDB instance (Local or Atlas)
+
+### Installation
+
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/akashwrites1120/texloop.git
+   cd texloop
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   npm install
+   ```
+
+3. **Set up Environment Variables**
+   Create a `.env` file in the root directory and add the following:
+
+   ```env
+   MONGODB_URI=your_mongodb_connection_string
+   NEXT_PUBLIC_SITE_URL=http://localhost:3000
+   ```
+
+4. **Run the Development Server**
+   Since this project uses a custom server for Socket.IO, use the following command:
+
+   ```bash
+   npm run dev
+   ```
+
+5. **Open the App**
+   Visit `http://localhost:3000` in your browser.
+
+## 📂 Project Structure
+
+```
+texloop/
+├── app/                  # Next.js App Router pages & API routes
+├── components/           # React components
+│   ├── room/             # Room-specific components (Editor, Chat)
+│   ├── shared/           # Shared components (Navbar, Footer)
+│   └── ui/               # Reusable UI components (Shadcn)
+├── hooks/                # Custom React hooks (useSocket, useRoom)
+├── lib/                  # Utility functions & configs
+├── models/               # Mongoose database models
+├── server.ts             # Custom Node.js server for Socket.IO
+└── types/                # TypeScript type definitions
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🤝 Contributing
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## Learn More
+## 📄 License
 
-To learn more about Next.js, take a look at the following resources:
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+<div align="center">
+  Made with ❤️ by <a href="https://github.com/akashwrites1120">Akash</a>
+</div>
