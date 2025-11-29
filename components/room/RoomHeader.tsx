@@ -2,7 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2, Users, AlertCircle, Lock, Copy, Check } from "lucide-react";
+import {
+  Trash2,
+  Users,
+  AlertCircle,
+  Lock,
+  Copy,
+  Check,
+  LogOut,
+} from "lucide-react";
 import { Room } from "@/types/room";
 import { Button } from "@/components/ui/button";
 import {
@@ -92,12 +100,17 @@ export default function RoomHeader({ room, roomPassword }: RoomHeaderProps) {
                   {room.roomId}
                 </h1>
                 {room.isPrivate && (
-                  <Badge variant="secondary" className="gap-1 text-[10px] sm:text-xs shrink-0">
+                  <Badge
+                    variant="secondary"
+                    className="gap-1 text-[10px] sm:text-xs shrink-0"
+                  >
                     <Lock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                     <span className="hidden xs:inline">Private</span>
                   </Badge>
                 )}
-                {room.expiresAt && <Timer expiresAt={room.expiresAt} className="shrink-0" />}
+                {room.expiresAt && (
+                  <Timer expiresAt={room.expiresAt} className="shrink-0" />
+                )}
               </div>
               <div className="flex items-center gap-2 sm:gap-3 mt-0.5 sm:mt-1 flex-wrap">
                 <p className="text-[10px] xs:text-xs sm:text-sm text-muted-foreground flex items-center gap-1">
@@ -109,7 +122,10 @@ export default function RoomHeader({ room, roomPassword }: RoomHeaderProps) {
                   <span className="xs:hidden">{room.participants.length}</span>
                 </p>
                 {room.autoDelete && (
-                  <Badge variant="outline" className="text-[9px] xs:text-[10px] sm:text-xs shrink-0">
+                  <Badge
+                    variant="outline"
+                    className="text-[9px] xs:text-[10px] sm:text-xs shrink-0"
+                  >
                     <span className="hidden sm:inline">Auto-delete</span>
                     <span className="sm:hidden">Auto</span>
                   </Badge>
@@ -125,7 +141,7 @@ export default function RoomHeader({ room, roomPassword }: RoomHeaderProps) {
               variant="outline"
               size="sm"
               onClick={handleCopy}
-              className="h-8 sm:h-9 gap-1.5 sm:gap-2 px-2 sm:px-3"
+              className="h-8 sm:h-9 gap-1.5 sm:gap-2 px-2 sm:px-3 hover:cursor-pointer"
             >
               {copied ? (
                 <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-500" />
@@ -137,16 +153,29 @@ export default function RoomHeader({ room, roomPassword }: RoomHeaderProps) {
               </span>
             </Button>
 
+            {/* Exit Room Button - Icon only on mobile */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push("/rooms")}
+              className="h-8 sm:h-9 gap-1.5 sm:gap-2 px-2 sm:px-3 hover:cursor-pointer"
+            >
+              <LogOut className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline text-xs sm:text-sm">
+                Exit Room
+              </span>
+            </Button>
+
             {/* Delete Button - Icon only on smallest screens */}
             <AlertDialog
               open={showDeleteDialog}
               onOpenChange={setShowDeleteDialog}
             >
               <AlertDialogTrigger asChild>
-                <Button 
-                  variant="destructive" 
-                  size="sm" 
-                  className="h-8 sm:h-9 gap-1.5 sm:gap-2 px-2 sm:px-3"
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="h-8 sm:h-9 gap-1.5 sm:gap-2 px-2 sm:px-3 hover:cursor-pointer"
                 >
                   <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden xs:inline text-xs sm:text-sm">

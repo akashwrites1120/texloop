@@ -12,7 +12,7 @@ import Navbar from "@/components/shared/Navbar";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col pt-16">
       <Navbar />
 
       {/* Hero Section */}
@@ -32,7 +32,7 @@ export default function HomePage() {
               <Button
                 size="lg"
                 variant="default"
-                className="group transition-all duration-300 hover:-translate-y-0.5"
+                className="group transition-all duration-300 hover:-translate-y-0.5 hover:cursor-pointer"
               >
                 Browse Active Rooms
                 <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
@@ -43,7 +43,7 @@ export default function HomePage() {
               <Button
                 size="lg"
                 variant="outline"
-                className="gap-2 transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-400"
+                className="gap-2 transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-400 hover:cursor-pointer"
               >
                 Join Existing Room
               </Button>

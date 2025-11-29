@@ -91,7 +91,7 @@ export default function CreateRoomDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="lg" className="gap-2 transition-all duration-200
-              hover:shadow-md hover:scale-[1.01]">
+              hover:shadow-md hover:scale-[1.01] hover:cursor-pointer active:scale-[1]">
           <Plus className="h-5 w-5" />
           Create New Room
         </Button>

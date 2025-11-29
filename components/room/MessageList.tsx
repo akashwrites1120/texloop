@@ -50,7 +50,7 @@ export default function MessageList({
 
   return (
     <div
-      className="h-full p-3 sm:p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50"
+      className="h-full min-h-0 p-3 sm:p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50"
       ref={scrollRef}
       style={{ overscrollBehavior: "contain" }}
     >

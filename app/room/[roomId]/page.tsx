@@ -561,6 +561,8 @@ export default function RoomPage() {
             onChange={handleTextChange}
             liveSyncEnabled={liveSyncEnabled}
             onLiveSyncToggle={setLiveSyncEnabled}
+            roomPassword={password}
+            roomId={roomId}
           />
         </div>
 
@@ -621,6 +623,8 @@ export default function RoomPage() {
               onChange={handleTextChange}
               liveSyncEnabled={liveSyncEnabled}
               onLiveSyncToggle={setLiveSyncEnabled}
+              roomPassword={password}
+              roomId={roomId}
             />
           </TabsContent>
 

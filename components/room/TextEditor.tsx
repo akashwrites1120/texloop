@@ -3,8 +3,32 @@
 import { useEffect, useRef, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { MAX_TEXT_LENGTH } from "@/lib/constants";
-import { CheckCircle2, AlertCircle, Wifi, WifiOff } from "lucide-react";
+import {
+  CheckCircle2,
+  AlertCircle,
+  Wifi,
+  WifiOff,
+  Copy,
+  Check,
+  Lock,
+} from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { copyToClipboard } from "@/lib/utils";
+import { useSocket } from "@/hooks/useSocket";
+import { useYjsEditor } from "@/hooks/useYjsEditor";
 
 interface TextEditorProps {
   value: string;
@@ -12,6 +36,8 @@ interface TextEditorProps {
   readOnly?: boolean;
   liveSyncEnabled: boolean;
   onLiveSyncToggle: (enabled: boolean) => void;
+  roomPassword?: string;
+  roomId: string;
 }
 
 export default function TextEditor({
@@ -20,12 +46,40 @@ export default function TextEditor({
   readOnly,
   liveSyncEnabled,
   onLiveSyncToggle,
+  roomPassword,
+  roomId,
 }: TextEditorProps) {
   const [charCount, setCharCount] = useState(0);
   const [lineCount, setLineCount] = useState(1);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const gutterRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Copy text state
+  const [copied, setCopied] = useState(false);
+
+  // Password verification state
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [verifyPassword, setVerifyPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  // Get socket connection
+  const { socket, isConnected } = useSocket();
+
+  // Y.js collaborative editing
+  const { updateText } = useYjsEditor({
+    roomId,
+    socket,
+    isConnected,
+    liveSyncEnabled,
+    initialValue: value,
+    onUpdate: (text) => {
+      // Update parent component when Y.js text changes
+      if (text !== value) {
+        onChange(text);
+      }
+    },
+  });
 
   useEffect(() => {
     setCharCount(value.length);
@@ -35,13 +89,56 @@ export default function TextEditor({
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     if (newValue.length <= MAX_TEXT_LENGTH) {
-      onChange(newValue);
+      if (liveSyncEnabled) {
+        // Use Y.js for collaborative editing
+        updateText(newValue);
+      } else {
+        // Regular update without Y.js
+        onChange(newValue);
+      }
     }
   };
 
   const handleScroll = () => {
     if (textareaRef.current && gutterRef.current) {
       gutterRef.current.scrollTop = textareaRef.current.scrollTop;
+    }
+  };
+
+  const handleCopyText = async () => {
+    try {
+      await copyToClipboard(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error("Failed to copy text:", error);
+    }
+  };
+
+  const handleLiveSyncToggle = (enabled: boolean) => {
+    if (enabled && roomPassword) {
+      // Show password dialog for verification when enabling
+      setShowPasswordDialog(true);
+    } else {
+      // No password required when turning off, or if room has no password
+      onLiveSyncToggle(enabled);
+    }
+  };
+
+  const handlePasswordVerify = () => {
+    if (!verifyPassword.trim()) {
+      setPasswordError("Password is required");
+      return;
+    }
+
+    // Compare with the plain text password that user entered to join the room
+    if (verifyPassword === roomPassword) {
+      setShowPasswordDialog(false);
+      setVerifyPassword("");
+      setPasswordError("");
+      onLiveSyncToggle(true);
+    } else {
+      setPasswordError("Incorrect password");
     }
   };
 
@@ -56,25 +153,42 @@ export default function TextEditor({
         <div className="flex items-center justify-between gap-2">
           {/* Left side - Title and Sync Status */}
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <h3 className="font-semibold text-xs sm:text-sm shrink-0">Live Editor</h3>
+            <h3 className="font-semibold text-xs sm:text-sm shrink-0">
+              Live Editor
+            </h3>
             <div className="flex items-center gap-1.5">
               {liveSyncEnabled ? (
                 <Wifi className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-green-500 shrink-0" />
               ) : (
                 <WifiOff className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground shrink-0" />
               )}
-              <span className="text-[9px] sm:text-[10px] text-muted-foreground hidden xs:inline">
+              <span className="text-[9px] sm:text-[10px] text-muted-foreground  xs:inline">
                 Live Sync {liveSyncEnabled ? "On" : "Off"}
               </span>
             </div>
           </div>
 
-          {/* Right side - Toggle and Line Count */}
+          {/* Right side - Copy, Toggle and Line Count */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Copy Text Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleCopyText}
+              className="h-7 w-7 sm:h-8 sm:w-8 p-0 hover:cursor-pointer"
+              title="Copy text to clipboard"
+            >
+              {copied ? (
+                <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-500" />
+              ) : (
+                <Copy className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              )}
+            </Button>
+
             <Switch
               checked={liveSyncEnabled}
-              onCheckedChange={onLiveSyncToggle}
-              className="scale-75 sm:scale-100"
+              onCheckedChange={handleLiveSyncToggle}
+              className="scale-75 sm:scale-100 hover:cursor-pointer"
             />
             <div className="text-[10px] xs:text-xs text-muted-foreground">
               {lineCount.toLocaleString()} {lineCount === 1 ? "line" : "lines"}
@@ -84,10 +198,7 @@ export default function TextEditor({
       </div>
 
       {/* Editor Area */}
-      <div 
-        ref={containerRef}
-        className="flex-1 flex overflow-hidden relative"
-      >
+      <div ref={containerRef} className="flex-1 flex overflow-hidden relative">
         {/* Line Numbers - hidden scrollbar, syncs with textarea */}
         <div
           ref={gutterRef}
@@ -97,7 +208,7 @@ export default function TextEditor({
           {lineNumbers.map((n) => (
             <div
               key={n}
-              className="leading-[1.5rem] xs:leading-[1.6rem] sm:leading-6 text-right pr-1"
+              className="leading-6 xs:leading-[1.6rem] sm:leading-6 text-right pr-1"
             >
               {n}
             </div>
@@ -112,12 +223,14 @@ export default function TextEditor({
             onChange={handleChange}
             onScroll={handleScroll}
             readOnly={readOnly}
-            placeholder="Start typing... Toggle Live Sync to collaborate in real-time."
-            className="w-full h-full resize-none border-0 focus-visible:ring-0 font-mono text-xs xs:text-[13px] sm:text-sm p-3 sm:p-4 leading-[1.5rem] xs:leading-[1.6rem] sm:leading-6 whitespace-pre-wrap overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50 bg-transparent placeholder:text-muted-foreground/40"
-            style={{ 
-              fieldSizing: "fixed",
-              overscrollBehavior: "contain"
-            } as React.CSSProperties}
+            placeholder="Start typing... Toggle Live Sync to collaborate in real-time with Y.js CRDT."
+            className="w-full h-full resize-none border-0 focus-visible:ring-0 font-mono text-xs xs:text-[13px] sm:text-sm p-3 sm:p-4 leading-6 xs:leading-[1.6rem] sm:leading-6 whitespace-pre-wrap overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50 bg-transparent placeholder:text-muted-foreground/40"
+            style={
+              {
+                fieldSizing: "fixed",
+                overscrollBehavior: "contain",
+              } as React.CSSProperties
+            }
           />
         </div>
       </div>
@@ -153,7 +266,10 @@ export default function TextEditor({
                 }
               >
                 {charCount.toLocaleString()}
-                <span className="hidden xs:inline"> / {MAX_TEXT_LENGTH.toLocaleString()}</span>
+                <span className="hidden xs:inline">
+                  {" "}
+                  / {MAX_TEXT_LENGTH.toLocaleString()}
+                </span>
               </span>
             </span>
             <span className="text-muted-foreground/60 hidden sm:inline">•</span>
@@ -162,10 +278,80 @@ export default function TextEditor({
             </span>
           </div>
           <span className="text-muted-foreground/60 hidden xs:inline text-[10px]">
-            Auto-save
+            {liveSyncEnabled ? "Y.js CRDT" : "Auto-save"}
           </span>
         </div>
       </div>
+
+      {/* Password Verification Dialog */}
+      <AlertDialog
+        open={showPasswordDialog}
+        onOpenChange={setShowPasswordDialog}
+      >
+        <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Lock className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
+              <span>Enable Live Sync</span>
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs sm:text-sm">
+              Enter the room password to enable live editing with Y.js CRDT.
+              This allows real-time collaboration with conflict-free merging.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-2 py-3 sm:py-4">
+            <Label
+              htmlFor="verifyPassword"
+              className="flex items-center gap-2 text-sm"
+            >
+              <Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              Room Password
+            </Label>
+            <Input
+              id="verifyPassword"
+              type="password"
+              placeholder="Enter room password"
+              value={verifyPassword}
+              onChange={(e) => {
+                setVerifyPassword(e.target.value);
+                setPasswordError("");
+              }}
+              onKeyDown={(e) => e.key === "Enter" && handlePasswordVerify()}
+              className="h-10 sm:h-11 text-sm sm:text-base"
+              autoFocus
+            />
+            {passwordError && (
+              <p className="text-xs sm:text-sm text-destructive flex items-center gap-1">
+                <AlertCircle className="h-3 w-3 shrink-0" />
+                {passwordError}
+              </p>
+            )}
+          </div>
+
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel
+              onClick={() => {
+                setVerifyPassword("");
+                setPasswordError("");
+              }}
+              className="w-full sm:w-auto m-0"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handlePasswordVerify();
+              }}
+              disabled={!verifyPassword.trim()}
+              className="w-full sm:w-auto"
+            >
+              Enable Live Sync
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

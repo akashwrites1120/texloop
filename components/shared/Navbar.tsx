@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 
 export default function Navbar() {
   return (
-    <nav className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+    <nav className="fixed top-0 left-0 w-full z-50 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="container mx-auto lg:px-20 md:px-16 px-4 ">
         <div className="flex h-16 items-center justify-between">
+         
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 font-bold text-xl">
             <div className="bg-primary text-primary-foreground p-2 rounded-lg">
@@ -20,10 +21,10 @@ export default function Navbar() {
           {/* Navigation */}
           <div className="flex items-center gap-4">
             <Link href="/rooms">
-              <Button variant="default">Active Rooms</Button>
+              <Button variant="default" className="hover:cursor-pointer">Active Rooms</Button>
             </Link>
             <Link href="/join">
-              <Button variant="outline" >Join Room</Button>
+              <Button variant="outline" className="hover:cursor-pointer">Join Room</Button>
             </Link>
             <a
               href="https://github.com/akashwrites1120"
@@ -31,9 +32,12 @@ export default function Navbar() {
               rel="noopener noreferrer"
               className="md:block"
             >
-              <Button variant="ghost" size="icon" className=" rounded-full transition-all duration-100
-              hover:bg-black hover:text-white" >
-                <Github className="h-5 w-5 " />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full transition-all duration-100 hover:bg-black hover:text-white hover:cursor-pointer"
+              >
+                <Github className="h-5 w-5" />
               </Button>
             </a>
           </div>

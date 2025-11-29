@@ -89,7 +89,7 @@ export default function RoomCard({ room }: RoomCardProps) {
             className="
               w-full font-medium group
               transition-all duration-200
-              hover:scale-[1.01] hover:shadow-md
+              hover:scale-[1.01] hover:shadow-md hover:cursor-pointer active:scale-[1]
             "
           >
             Join Room

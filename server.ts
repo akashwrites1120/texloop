@@ -218,6 +218,78 @@ app.prepare().then(() => {
       }
     });
 
+    // Y.js collaborative editing events
+    // Store Y.js state per room in memory (in production, consider Redis)
+    const roomStates = new Map<string, Uint8Array>();
+
+    socket.on("yjs:update", async ({ roomId, update }) => {
+      try {
+        // Convert array back to Uint8Array
+        const updateArray = new Uint8Array(update);
+
+        // Store/merge the update with existing state
+        const currentState = roomStates.get(roomId);
+        if (currentState) {
+          // Merge updates (Y.js handles this automatically)
+          const Y = await import("yjs");
+          const doc = new Y.Doc();
+          Y.applyUpdate(doc, currentState);
+          Y.applyUpdate(doc, updateArray);
+          roomStates.set(roomId, Y.encodeStateAsUpdate(doc));
+        } else {
+          roomStates.set(roomId, updateArray);
+        }
+
+        // Broadcast update to all other clients in the room (excluding sender)
+        socket.to(roomId).emit("yjs:update", { update });
+
+        // Also update the text content in database for persistence
+        const Y = await import("yjs");
+        const doc = new Y.Doc();
+        Y.applyUpdate(doc, roomStates.get(roomId)!);
+        const ytext = doc.getText("content");
+        const textContent = ytext.toString();
+
+        await RoomModel.updateOne(
+          { roomId },
+          {
+            textContent,
+            lastActivity: new Date(),
+          }
+        );
+      } catch (error) {
+        console.error("Error handling Y.js update:", error);
+      }
+    });
+
+    socket.on("yjs:sync-request", async ({ roomId }) => {
+      try {
+        // Send current state to the requesting client
+        const state = roomStates.get(roomId);
+        if (state) {
+          socket.emit("yjs:sync-response", { state: Array.from(state) });
+        } else {
+          // If no state exists, create from database content
+          const room = await RoomModel.findOne({ roomId });
+          if (room && room.textContent) {
+            const Y = await import("yjs");
+            const doc = new Y.Doc();
+            const ytext = doc.getText("content");
+            ytext.insert(0, room.textContent);
+            const stateVector = Y.encodeStateAsUpdate(doc);
+            roomStates.set(roomId, stateVector);
+            socket.emit("yjs:sync-response", {
+              state: Array.from(stateVector),
+            });
+          } else {
+            socket.emit("yjs:sync-response", { state: [] });
+          }
+        }
+      } catch (error) {
+        console.error("Error handling Y.js sync request:", error);
+      }
+    });
+
     // Disconnect
     socket.on("disconnect", async () => {
       try {

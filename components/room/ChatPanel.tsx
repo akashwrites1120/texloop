@@ -40,12 +40,12 @@ export default function ChatPanel({
             {isConnected ? (
               <>
                 <Wifi className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                <span className="hidden xs:inline">Online</span>
+                <span className="inline">Online</span>
               </>
             ) : (
               <>
                 <WifiOff className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                <span className="hidden xs:inline">Offline</span>
+                <span className="inline">Offline</span>
               </>
             )}
           </Badge>
