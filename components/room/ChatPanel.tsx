@@ -25,7 +25,7 @@ export default function ChatPanel({
   return (
     <Card className="flex flex-col h-full border-l-0 md:border-l rounded-none overflow-hidden">
       {/* Compact Header - matching TextEditor style */}
-      <div className="px-3 py-2 sm:px-4 sm:py-2.5 border-b bg-muted/30 shrink-0">
+      <div className="px-3 py-1.5 sm:px-4 sm:py-2.5 border-b bg-muted/30 shrink-0">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <h3 className="font-semibold text-xs sm:text-sm">Chat</h3>

@@ -533,7 +533,7 @@ export default function RoomPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="h-dvh flex flex-col bg-background overflow-hidden">
       <RoomHeader room={room} roomPassword={password} />
 
       {/* Connection Status Alert */}
@@ -585,7 +585,7 @@ export default function RoomPage() {
           onValueChange={(v) => setActiveTab(v as "editor" | "chat")}
           className="flex-1 flex flex-col"
         >
-          <TabsList className="grid w-full grid-cols-2 rounded-none border-b h-11 sm:h-12 bg-background/95 backdrop-blur shrink-0">
+          <TabsList className="grid w-full grid-cols-2 rounded-none border-b h-10 sm:h-12 bg-background/95 backdrop-blur shrink-0">
             <TabsTrigger
               value="editor"
               className="gap-1.5 sm:gap-2 text-sm data-[state=active]:bg-muted/50"
