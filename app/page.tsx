@@ -143,7 +143,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t py-4">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>© 2025 TexLoop. Unlike your crush, we actually respond 😉💬.</p>
+          <p>© 2025 TexLoop. Unlike your crush, we actually respond 😉💬</p>
           {/* <div className="flex items-center justify-center gap-6 mt-4">
             <Link href="/rooms" className="hover:text-foreground">
               Active Rooms

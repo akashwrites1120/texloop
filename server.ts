@@ -16,6 +16,7 @@ import {
   decryptMessage,
 } from "./lib/encryption";
 import { rateLimiter } from "./lib/rate-limiter";
+import { setSocketIO } from "./lib/socket-instance";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";

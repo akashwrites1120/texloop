@@ -94,7 +94,10 @@ export default function CreateRoomDialog() {
           className="gap-2 transition-all duration-200 hover:shadow-md hover:scale-[1.01] hover:cursor-pointer active:scale-[1]"
         >
           <Plus className="h-5 w-5" />
-          Create New Room
+          {/* Mobile: New Room, Desktop: Create New Room */}
+          <span className="sm:hidden">New Room</span> {/* mobile only */}
+          <span className="hidden sm:inline">Create New Room</span>{" "}
+          {/* desktop only */}
         </Button>
       </DialogTrigger>
 
@@ -123,7 +126,9 @@ export default function CreateRoomDialog() {
               }`}
             />
             {roomNameError ? (
-              <p className="text-sm text-red-500 font-medium">{roomNameError}</p>
+              <p className="text-sm text-red-500 font-medium">
+                {roomNameError}
+              </p>
             ) : (
               <p className="text-sm text-muted-foreground">
                 Leave empty for auto-generated name
@@ -214,7 +219,10 @@ export default function CreateRoomDialog() {
               className="h-4 w-4"
             />
             <div className="flex-1">
-              <Label htmlFor="autoDelete" className="cursor-pointer font-medium">
+              <Label
+                htmlFor="autoDelete"
+                className="cursor-pointer font-medium"
+              >
                 Automatic Deletion
               </Label>
               <p className="text-sm text-muted-foreground">
@@ -233,7 +241,11 @@ export default function CreateRoomDialog() {
           <Button
             onClick={handleCreate}
             disabled={loading || !formData.password.trim()}
-            className={!formData.password.trim() ? "opacity-60 cursor-not-allowed hover:cursor-not-allowed" : ""}
+            className={
+              !formData.password.trim()
+                ? "opacity-60 cursor-not-allowed hover:cursor-not-allowed"
+                : ""
+            }
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Create Room

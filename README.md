@@ -2,8 +2,6 @@
 
 > **Share Text in Real-Time. Collaborate Instantly.**
 
-![TexLoop Banner](https://via.placeholder.com/1200x400?text=TexLoop+Preview)
-
 TexLoop is a modern, real-time text sharing and collaboration platform designed for speed and privacy. Create temporary rooms, share code or text, and chat with others instantly—no signup required.
 
 Built with **Next.js 15**, **Socket.IO**, and **MongoDB**.

@@ -39,7 +39,7 @@ export default function RoomPage() {
   const urlPassword = searchParams.get("password");
 
   const { socket, isConnected } = useSocket();
-  const { room, isLoading, isError } = useRoom(roomId);
+  const { room, isLoading, isError, mutate } = useRoom(roomId);
 
   const [userId] = useState(() => nanoid(10));
   const [username] = useState(() => `User-${nanoid(4)}`);
@@ -213,6 +213,18 @@ export default function RoomPage() {
       }
     };
 
+    const handleParticipantsUpdate = (participants: string[]) => {
+      if (room) {
+        mutate(
+          {
+            success: true,
+            room: { ...room, participants },
+          },
+          false
+        );
+      }
+    };
+
     const handleTextUpdate = ({
       textContent: newText,
     }: {
@@ -257,6 +269,7 @@ export default function RoomPage() {
     };
 
     socket.on("message:new", handleNewMessage);
+    socket.on("participants:update", handleParticipantsUpdate);
     socket.on("text:update", handleTextUpdate);
     socket.on("room:deleted", handleRoomDeleted);
     socket.on("error", handleError);
@@ -265,6 +278,7 @@ export default function RoomPage() {
 
     return () => {
       socket.off("message:new", handleNewMessage);
+      socket.off("participants:update", handleParticipantsUpdate);
       socket.off("text:update", handleTextUpdate);
       socket.off("room:deleted", handleRoomDeleted);
       socket.off("error", handleError);

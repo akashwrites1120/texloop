@@ -255,7 +255,7 @@ export default function TextEditor({
             onChange={handleChange}
             onScroll={handleScroll}
             readOnly={readOnly}
-            placeholder="Start typing... Toggle Live Sync to collaborate in real-time..."
+            placeholder="Start typing… Click a message to quickly edit or resend it."
             className="w-full h-full resize-none border-0 focus-visible:ring-0 font-mono text-xs xs:text-[13px] sm:text-sm p-3 sm:p-4 leading-6 xs:leading-[1.6rem] sm:leading-6 whitespace-pre-wrap overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50 bg-transparent placeholder:text-muted-foreground/40"
             style={
               {
