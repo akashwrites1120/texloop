@@ -42,10 +42,17 @@ export default function RoomHeader({ room, roomPassword }: RoomHeaderProps) {
   const [deleteError, setDeleteError] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [shakePassword, setShakePassword] = useState(false);
+
+  const triggerShake = () => {
+    setShakePassword(true);
+    setTimeout(() => setShakePassword(false), 500);
+  };
 
   const handleDelete = async () => {
     if (!deletePassword.trim()) {
       setDeleteError("Password is required to delete this room");
+      triggerShake();
       return;
     }
 
@@ -67,11 +74,13 @@ export default function RoomHeader({ room, roomPassword }: RoomHeaderProps) {
         router.push("/rooms");
       } else {
         setDeleteError(data.error || "Failed to delete room");
+        triggerShake();
         setDeleting(false);
       }
     } catch (error) {
       console.error("Error deleting room:", error);
       setDeleteError("Failed to delete room");
+      triggerShake();
       setDeleting(false);
     }
   };
@@ -215,7 +224,9 @@ export default function RoomHeader({ room, roomPassword }: RoomHeaderProps) {
                       setDeleteError("");
                     }}
                     disabled={deleting}
-                    className="h-10 sm:h-11 text-sm sm:text-base"
+                    className={`h-10 sm:h-11 text-sm sm:text-base ${
+                      shakePassword ? "animate-shake border-destructive" : ""
+                    }`}
                   />
                   {deleteError && (
                     <p className="text-xs sm:text-sm text-destructive flex items-center gap-1">
@@ -234,7 +245,7 @@ export default function RoomHeader({ room, roomPassword }: RoomHeaderProps) {
                       setDeletePassword("");
                       setDeleteError("");
                     }}
-                    className="w-full sm:w-auto m-0"
+                    className="w-full sm:w-auto m-0 hover:cursor-pointer"
                   >
                     Cancel
                   </AlertDialogCancel>
@@ -244,7 +255,7 @@ export default function RoomHeader({ room, roomPassword }: RoomHeaderProps) {
                       handleDelete();
                     }}
                     disabled={deleting || !deletePassword.trim()}
-                    className="w-full sm:w-auto bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    className="w-full sm:w-auto bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:cursor-pointer"
                   >
                     {deleting ? "Destroying..." : "Destroy Room"}
                   </AlertDialogAction>

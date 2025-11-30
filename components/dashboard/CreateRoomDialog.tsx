@@ -71,7 +71,6 @@ export default function CreateRoomDialog() {
         setOpen(false);
         router.push(`/room/${data.room.roomId}`);
       } else {
-        // Check if it's a room name conflict error
         if (response.status === 409 && formData.name) {
           setRoomNameError(data.error || "Room with this name already exists");
           setShakeInput(true);
@@ -90,12 +89,15 @@ export default function CreateRoomDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="lg" className="gap-2 transition-all duration-200
-              hover:shadow-md hover:scale-[1.01] hover:cursor-pointer active:scale-[1]">
+        <Button
+          size="lg"
+          className="gap-2 transition-all duration-200 hover:shadow-md hover:scale-[1.01] hover:cursor-pointer active:scale-[1]"
+        >
           <Plus className="h-5 w-5" />
           Create New Room
         </Button>
       </DialogTrigger>
+
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Create a New Room</DialogTitle>
@@ -114,25 +116,22 @@ export default function CreateRoomDialog() {
               value={formData.name}
               onChange={(e) => {
                 setFormData({ ...formData, name: e.target.value });
-                setRoomNameError(""); // Clear error on change
+                setRoomNameError("");
               }}
               className={`${shakeInput ? "animate-shake" : ""} ${
                 roomNameError ? "border-red-500 focus-visible:ring-red-500" : ""
               }`}
             />
-            {roomNameError && (
-              <p className="text-sm text-red-500 font-medium">
-                {roomNameError}
-              </p>
-            )}
-            {!roomNameError && (
+            {roomNameError ? (
+              <p className="text-sm text-red-500 font-medium">{roomNameError}</p>
+            ) : (
               <p className="text-sm text-muted-foreground">
                 Leave empty for auto-generated name
               </p>
             )}
           </div>
 
-          {/* Password - Required for ALL rooms */}
+          {/* Password */}
           <div className="grid gap-2">
             <Label htmlFor="password" className="flex items-center gap-2">
               <Lock className="h-4 w-4" />
@@ -153,7 +152,7 @@ export default function CreateRoomDialog() {
             </p>
           </div>
 
-          {/* Private Room Toggle */}
+          {/* Private Room */}
           <div className="flex items-center gap-2 p-4 border rounded-lg bg-muted/50">
             <input
               type="checkbox"
@@ -215,10 +214,7 @@ export default function CreateRoomDialog() {
               className="h-4 w-4"
             />
             <div className="flex-1">
-              <Label
-                htmlFor="autoDelete"
-                className="cursor-pointer font-medium"
-              >
+              <Label htmlFor="autoDelete" className="cursor-pointer font-medium">
                 Automatic Deletion
               </Label>
               <p className="text-sm text-muted-foreground">
@@ -232,7 +228,13 @@ export default function CreateRoomDialog() {
           <Button variant="outline" onClick={() => setOpen(false)}>
             Cancel
           </Button>
-          <Button onClick={handleCreate} disabled={loading}>
+
+          {/* 🔥 Button disabled unless password is filled */}
+          <Button
+            onClick={handleCreate}
+            disabled={loading || !formData.password.trim()}
+            className={!formData.password.trim() ? "opacity-60 cursor-not-allowed hover:cursor-not-allowed" : ""}
+          >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Create Room
           </Button>

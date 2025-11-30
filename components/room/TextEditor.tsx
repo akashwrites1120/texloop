@@ -369,7 +369,7 @@ export default function TextEditor({
                 setVerifyPassword("");
                 setPasswordError("");
               }}
-              className="w-full sm:w-auto m-0"
+              className="w-full sm:w-auto m-0 hover:cursor-pointer"
             >
               Cancel
             </AlertDialogCancel>
@@ -379,7 +379,14 @@ export default function TextEditor({
                 handlePasswordVerify();
               }}
               disabled={!verifyPassword.trim() || isVerifying}
-              className="w-full sm:w-auto"
+              className={`
+    w-full sm:w-auto
+    ${
+      !verifyPassword.trim() || isVerifying
+        ? "cursor-not-allowed hover:cursor-not-allowed opacity-60"
+        : "hover:cursor-pointer"
+    }
+  `}
             >
               {isVerifying ? "Verifying..." : "Enable Live Sync"}
             </AlertDialogAction>

@@ -24,14 +24,27 @@ export default function JoinPage() {
   const [error, setError] = useState("");
   const [requiresPassword, setRequiresPassword] = useState(false);
 
+  // For shaking animation
+  const [shakeRoomId, setShakeRoomId] = useState(false);
+  const [shakePassword, setShakePassword] = useState(false);
+
+  const triggerShake = (
+    setter: React.Dispatch<React.SetStateAction<boolean>>
+  ) => {
+    setter(true);
+    setTimeout(() => setter(false), 500);
+  };
+
   const handleJoin = async () => {
     if (!roomId.trim()) {
       setError("Please enter a room ID");
+      triggerShake(setShakeRoomId);
       return;
     }
 
     if (requiresPassword && !password.trim()) {
       setError("Please enter the room password");
+      triggerShake(setShakePassword);
       return;
     }
 
@@ -39,24 +52,25 @@ export default function JoinPage() {
     setError("");
 
     try {
-      // First, check if room exists and if it requires password
+      // Check if room exists
       const checkResponse = await fetch(`/api/rooms/${roomId}`);
       const checkData = await checkResponse.json();
 
       if (!checkData.success || !checkData.room) {
         setError("Room not found or has expired");
+        triggerShake(setShakeRoomId);
         setLoading(false);
         return;
       }
 
-      // If room is private and we haven't shown password field yet
+      // Ask for password if private
       if (checkData.room.isPrivate && !requiresPassword) {
         setRequiresPassword(true);
         setLoading(false);
         return;
       }
 
-      // If room is private, verify password
+      // Verify password
       if (checkData.room.isPrivate) {
         const verifyResponse = await fetch(`/api/rooms/${roomId}/verify`, {
           method: "POST",
@@ -68,33 +82,33 @@ export default function JoinPage() {
 
         if (!verifyData.success) {
           setError("Incorrect password");
+          triggerShake(setShakePassword);
           setLoading(false);
           return;
         }
       }
 
-      // Password verified or public room, proceed to join
+      // Success -> Redirect
       router.push(
         `/room/${roomId}${checkData.room.isPrivate ? `?password=${encodeURIComponent(password)}` : ""}`
       );
     } catch (err) {
       console.error("Error joining room:", err);
       setError("Failed to join room. Please try again.");
-      setLoading(false);
     }
+
+    setLoading(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleJoin();
-    }
+    if (e.key === "Enter") handleJoin();
   };
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <div className="flex-1 flex items-center justify-center p-4 ">
+      <div className="flex-1 flex items-center justify-center p-4">
         <Card className="w-full max-w-md pt-4 pb-6">
           <CardHeader>
             <CardTitle className="text-3xl">Join Room</CardTitle>
@@ -104,6 +118,7 @@ export default function JoinPage() {
           </CardHeader>
 
           <CardContent className="space-y-4">
+            {/* Room ID */}
             <div className="space-y-2">
               <Label htmlFor="roomId">Room ID</Label>
               <Input
@@ -119,9 +134,11 @@ export default function JoinPage() {
                 }}
                 onKeyDown={handleKeyDown}
                 disabled={loading}
+                className={shakeRoomId ? "animate-shake" : ""}
               />
             </div>
 
+            {/* Password field */}
             {requiresPassword && (
               <div className="space-y-2">
                 <Label htmlFor="password" className="flex items-center gap-2">
@@ -140,6 +157,7 @@ export default function JoinPage() {
                   onKeyDown={handleKeyDown}
                   disabled={loading}
                   autoFocus
+                  className={shakePassword ? "animate-shake border-destructive" : ""}
                 />
                 <p className="text-sm text-muted-foreground">
                   This is a private room. Password required to join.
@@ -147,7 +165,7 @@ export default function JoinPage() {
               </div>
             )}
 
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p className="text-sm text-red-500">{error}</p>}
 
             <div className="p-4 bg-muted rounded-lg text-sm">
               <p className="font-medium mb-1">💡 Tip</p>
@@ -158,7 +176,8 @@ export default function JoinPage() {
             </div>
           </CardContent>
 
-          <CardFooter>
+          <CardFooter className="flex flex-col gap-3">
+            {/* Join Button */}
             <Button
               onClick={handleJoin}
               disabled={loading || !roomId.trim()}
@@ -166,6 +185,15 @@ export default function JoinPage() {
             >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {requiresPassword ? "Verify & Join" : "Join Room"}
+            </Button>
+
+            {/* Cancel Button */}
+            <Button
+              variant="outline"
+              className="w-full hover:cursor-pointer"
+              onClick={() => router.push("/rooms")}
+            >
+              Cancel
             </Button>
           </CardFooter>
         </Card>
