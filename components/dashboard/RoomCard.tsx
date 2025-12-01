@@ -29,7 +29,6 @@ export default function RoomCard({ room }: RoomCardProps) {
     >
       <CardHeader className="pb-4 space-y-2 px-5 pt-5">
         <div className="flex items-start justify-between gap-4">
-
           {/* Room Title */}
           <div className="flex-1 space-y-2 min-w-0">
             <h3 className="text-lg font-semibold tracking-tight truncate">
@@ -64,10 +63,8 @@ export default function RoomCard({ room }: RoomCardProps) {
       </CardHeader>
 
       <CardContent className="px-5 pb-5 space-y-4">
-
         {/* Stats */}
         <div className="flex items-center justify-between text-sm text-muted-foreground">
-
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             <span className="font-medium">{room.participants.length}</span>

@@ -157,7 +157,9 @@ export default function JoinPage() {
                   onKeyDown={handleKeyDown}
                   disabled={loading}
                   autoFocus
-                  className={shakePassword ? "animate-shake border-destructive" : ""}
+                  className={
+                    shakePassword ? "animate-shake border-destructive" : ""
+                  }
                 />
                 <p className="text-sm text-muted-foreground">
                   This is a private room. Password required to join.

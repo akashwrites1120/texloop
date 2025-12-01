@@ -27,7 +27,7 @@ export default function Navbar() {
               <Button variant="outline" className="hover:cursor-pointer">Join Room</Button>
             </Link>
             <a
-              href="https://github.com/akashwrites1120"
+              href="https://github.com/akashwrites1120/texloop"
               target="_blank"
               rel="noopener noreferrer"
               className="md:block"
