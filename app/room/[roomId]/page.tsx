@@ -483,7 +483,7 @@ export default function RoomPage() {
   if (room.isPrivate && !isVerified) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-        <Card className="w-full max-w-md shadow-lg">
+        <Card className="w-full max-w-md shadow-lg py-8">
           <CardHeader className="space-y-3">
             <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
               <Lock className="h-6 w-6 text-primary" />
@@ -528,14 +528,14 @@ export default function RoomPage() {
             <Button
               variant="outline"
               onClick={() => router.push("/rooms")}
-              className="w-full sm:flex-1 h-10 sm:h-11"
+              className="w-full sm:flex-1 h-10 sm:h-11 active:scale-[0.98] hover:cursor-pointer"
             >
               Cancel
             </Button>
             <Button
               onClick={handlePasswordSubmit}
               disabled={verifying || !password.trim()}
-              className="w-full sm:flex-1 h-10 sm:h-11"
+              className="w-full sm:flex-1 h-10 sm:h-11 active:scale-[0.98] hover:cursor-pointer"
             >
               {verifying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Join Room

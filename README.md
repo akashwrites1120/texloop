@@ -4,7 +4,7 @@
 
 TexLoop is a modern, real-time text sharing and collaboration platform designed for speed and privacy. Create temporary rooms, share code or text, and chat with others instantly—no signup required.
 
-Built with **Next.js 15**, **Socket.IO**, and **MongoDB**.
+Built with **Next.js 16**, **Socket.IO**, and **MongoDB**.
 
 ---
 
@@ -19,7 +19,7 @@ Built with **Next.js 15**, **Socket.IO**, and **MongoDB**.
 
 ## 🛠️ Tech Stack
 
-- **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/) & [Shadcn/UI](https://ui.shadcn.com/)
 - **Real-time**: [Socket.IO](https://socket.io/) & [Y.js](https://github.com/yjs/yjs)

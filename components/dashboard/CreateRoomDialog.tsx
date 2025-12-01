@@ -237,7 +237,7 @@ export default function CreateRoomDialog() {
             Cancel
           </Button>
 
-          {/* 🔥 Button disabled unless password is filled */}
+          {/*Button disabled unless password is filled */}
           <Button
             onClick={handleCreate}
             disabled={loading || !formData.password.trim()}
