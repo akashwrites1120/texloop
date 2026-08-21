@@ -98,20 +98,23 @@ export default function RoomHeader({ room, roomPassword }: RoomHeaderProps) {
   };
 
   return (
-    <div className="border-b bg-background/95 backdrop-blur shrink-0">
-      <div className="px-3 sm:px-4 md:px-6">
-        <div className="flex items-center justify-between py-2 sm:py-3 md:py-4 gap-2 sm:gap-4">
+    <div className="shrink-0 border-b bg-background/90 backdrop-blur-md">
+      <div className="mx-auto max-w-[1400px] px-3 sm:px-4 md:px-6">
+        <div className="flex items-center justify-between gap-2 py-2.5 sm:gap-4 sm:py-3">
           {/* Room Info */}
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+            <span className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary font-mono text-xs font-semibold text-primary-foreground sm:flex">
+              {room.roomId.slice(0, 2).toUpperCase()}
+            </span>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                <h1 className="text-base sm:text-lg md:text-xl font-bold truncate">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <h1 className="font-display truncate text-base font-semibold tracking-tight sm:text-lg">
                   {room.roomId}
                 </h1>
                 {room.isPrivate && (
                   <Badge
                     variant="secondary"
-                    className="gap-1 text-[10px] sm:text-xs shrink-0"
+                    className="shrink-0 gap-1 bg-accent text-[10px] text-accent-foreground sm:text-xs"
                   >
                     <Lock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                     <span className="hidden xs:inline">Private</span>
@@ -121,8 +124,8 @@ export default function RoomHeader({ room, roomPassword }: RoomHeaderProps) {
                   <Timer expiresAt={room.expiresAt} className="shrink-0" />
                 )}
               </div>
-              <div className="flex items-center gap-2 sm:gap-3 mt-0.5 sm:mt-1 flex-wrap">
-                <p className="text-[10px] xs:text-xs sm:text-sm text-muted-foreground flex items-center gap-1">
+              <div className="mt-0.5 flex flex-wrap items-center gap-2 text-muted-foreground sm:mt-1 sm:gap-3">
+                <p className="flex items-center gap-1 text-[10px] xs:text-xs sm:text-sm">
                   <Users className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                   <span className="hidden xs:inline">
                     {room.participants.length} participant
@@ -131,10 +134,7 @@ export default function RoomHeader({ room, roomPassword }: RoomHeaderProps) {
                   <span className="xs:hidden">{room.participants.length}</span>
                 </p>
                 {room.autoDelete && (
-                  <Badge
-                    variant="outline"
-                    className="text-[9px] xs:text-[10px] sm:text-xs shrink-0"
-                  >
+                  <Badge variant="outline" className="shrink-0 text-[9px] xs:text-[10px] sm:text-xs">
                     <span className="hidden sm:inline">Auto-delete</span>
                     <span className="sm:hidden">Auto</span>
                   </Badge>
@@ -144,35 +144,33 @@ export default function RoomHeader({ room, roomPassword }: RoomHeaderProps) {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             {/* Copy Button - Icon only on mobile */}
             <Button
               variant="outline"
               size="sm"
               onClick={handleCopy}
-              className="h-8 sm:h-9 gap-1.5 sm:gap-2 px-2 sm:px-3 hover:cursor-pointer"
+              className="h-8 gap-1.5 rounded-full px-2 transition-all hover:cursor-pointer sm:h-9 sm:gap-2 sm:px-3.5"
             >
               {copied ? (
-                <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-500" />
+                <Check className="h-3.5 w-3.5 text-brand sm:h-4 sm:w-4" />
               ) : (
                 <Copy className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               )}
-              <span className="hidden sm:inline text-xs sm:text-sm">
-                {copied ? "Copied!" : "Copy Link"}
+              <span className="hidden text-xs sm:inline sm:text-sm">
+                {copied ? "Copied!" : "Copy link"}
               </span>
             </Button>
 
             {/* Exit Room Button - Icon only on mobile */}
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={() => router.push("/rooms")}
-              className="h-8 sm:h-9 gap-1.5 sm:gap-2 px-2 sm:px-3 hover:cursor-pointer"
+              className="h-8 gap-1.5 rounded-full px-2 text-muted-foreground hover:cursor-pointer hover:text-foreground sm:h-9 sm:gap-2 sm:px-3.5"
             >
               <LogOut className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline text-xs sm:text-sm">
-                Exit Room
-              </span>
+              <span className="hidden text-xs sm:inline sm:text-sm">Exit</span>
             </Button>
 
             {/* Delete Button - Icon only on smallest screens */}
@@ -184,10 +182,10 @@ export default function RoomHeader({ room, roomPassword }: RoomHeaderProps) {
                 <Button
                   variant="destructive"
                   size="sm"
-                  className="h-8 sm:h-9 gap-1.5 sm:gap-2 px-2 sm:px-3 hover:cursor-pointer"
+                  className="h-8 gap-1.5 rounded-full px-2 hover:cursor-pointer sm:h-9 sm:gap-2 sm:px-3.5"
                 >
                   <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span className="hidden xs:inline text-xs sm:text-sm">
+                  <span className="hidden text-xs xs:inline sm:text-sm">
                     Destroy
                   </span>
                 </Button>

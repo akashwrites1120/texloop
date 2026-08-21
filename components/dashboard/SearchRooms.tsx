@@ -10,14 +10,14 @@ interface SearchRoomsProps {
 
 export default function SearchRooms({ value, onChange }: SearchRoomsProps) {
   return (
-    <div className="relative">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+    <div className="group relative">
+      <Search className="pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-brand" />
       <Input
         type="text"
-        placeholder="Search rooms by ID..."
+        placeholder="Search rooms by ID…"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="pl-10"
+        className="h-11 rounded-full bg-card pr-4 pl-11 shadow-sm transition-shadow focus-visible:ring-brand/30"
       />
     </div>
   );

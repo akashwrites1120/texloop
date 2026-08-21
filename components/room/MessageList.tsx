@@ -5,6 +5,7 @@ import { Message } from "@/types/message";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { MessagesSquare } from "lucide-react";
 
 interface MessageListProps {
   messages: Message[];
@@ -41,9 +42,15 @@ export default function MessageList({
   if (messages.length === 0) {
     return (
       <div className="absolute inset-0 flex items-center justify-center p-4">
-        <p className="text-sm text-muted-foreground text-center">
-          No messages yet. Start the conversation!
-        </p>
+        <div className="flex flex-col items-center gap-2 text-center">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+            <MessagesSquare className="h-4.5 w-4.5 text-muted-foreground" />
+          </div>
+          <p className="max-w-[200px] text-xs leading-relaxed text-muted-foreground">
+            No messages yet. Say hello — or click any message to load it into
+            the editor.
+          </p>
+        </div>
       </div>
     );
   }
@@ -61,9 +68,12 @@ export default function MessageList({
 
           if (isSystem) {
             return (
-              <div key={message._id} className="flex justify-center py-1">
-                <div className="bg-muted/50 px-3 py-1 rounded-full">
-                  <p className="text-[10px] xs:text-xs text-muted-foreground text-center">
+              <div
+                key={message._id}
+                className="flex animate-pop-in justify-center py-1"
+              >
+                <div className="rounded-full border bg-muted/60 px-3 py-1">
+                  <p className="font-mono text-[10px] text-muted-foreground text-center xs:text-xs">
                     {message.message}
                   </p>
                 </div>
@@ -75,7 +85,7 @@ export default function MessageList({
             <div
               key={message._id}
               className={cn(
-                "flex gap-2 items-end",
+                "animate-pop-in flex items-end gap-2",
                 isOwn ? "flex-row-reverse" : "flex-row"
               )}
             >
@@ -108,10 +118,10 @@ export default function MessageList({
                 {/* Message Content */}
                 <div
                   className={cn(
-                    "px-3 py-2 sm:px-3 sm:py-2 rounded-2xl cursor-pointer transition-all hover:opacity-90 active:scale-[0.98] break-words",
+                    "cursor-pointer break-words px-3 py-2 transition-all duration-150 hover:opacity-90 active:scale-[0.98]",
                     isOwn
-                      ? "bg-primary text-primary-foreground rounded-br-md"
-                      : "bg-muted rounded-bl-md"
+                      ? "rounded-2xl rounded-br-sm bg-primary text-primary-foreground"
+                      : "rounded-2xl rounded-bl-sm border bg-card"
                   )}
                   onClick={() => onSelectMessage && onSelectMessage(message)}
                 >

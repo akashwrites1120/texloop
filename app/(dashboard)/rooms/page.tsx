@@ -5,6 +5,7 @@ import { useRooms } from "@/hooks/useRoom";
 import RoomList from "@/components/dashboard/RoomList";
 import CreateRoomDialog from "@/components/dashboard/CreateRoomDialog";
 import SearchRooms from "@/components/dashboard/SearchRooms";
+import Reveal from "@/components/shared/Reveal";
 import { Room } from "@/types/room";
 
 export default function RoomsPage() {
@@ -20,22 +21,33 @@ export default function RoomsPage() {
   }, [rooms, searchQuery]);
 
   return (
-    <div className="container mx-auto lg:px-20 md:px-16 px-6 py-8 pt-24">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">Active Rooms</h1>
-          <p className="text-muted-foreground mt-1">
-            Join an existing room or create a new one to start sharing.
-          </p>
+    <div className="relative mx-auto w-full max-w-6xl px-4 py-8 pt-28 sm:px-6">
+      <div className="bg-dots mask-fade-y pointer-events-none absolute inset-x-0 top-0 h-56 opacity-60" />
+
+      <Reveal className="relative">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="font-mono text-xs tracking-widest text-brand uppercase">
+              browse
+            </p>
+            <h1 className="font-display mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+              Active rooms
+            </h1>
+            <p className="mt-2 max-w-md text-sm text-muted-foreground">
+              Jump into a live room or spin up your own — it takes one click.
+            </p>
+          </div>
+          <CreateRoomDialog />
         </div>
-        <CreateRoomDialog />
-      </div>
 
-      <div className="mb-6 max-w-md">
-        <SearchRooms value={searchQuery} onChange={setSearchQuery} />
-      </div>
+        <div className="mt-8 mb-6 max-w-md">
+          <SearchRooms value={searchQuery} onChange={setSearchQuery} />
+        </div>
+      </Reveal>
 
-      <RoomList rooms={filteredRooms} isLoading={isLoading} />
+      <div className="relative">
+        <RoomList rooms={filteredRooms} isLoading={isLoading} />
+      </div>
     </div>
   );
 }

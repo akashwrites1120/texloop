@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Lock } from "lucide-react";
+import { Loader2, Lock, Lightbulb } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -105,22 +105,26 @@ export default function JoinPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="relative flex min-h-screen flex-col">
+      <div className="bg-dots mask-fade-y pointer-events-none absolute inset-x-0 top-0 h-72 opacity-60" />
       <Navbar />
 
-      <div className="flex-1 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md pt-4 pb-6">
+      <div className="relative flex flex-1 items-center justify-center p-4">
+        <Card className="animate-fade-up w-full max-w-md rounded-2xl shadow-sm">
           <CardHeader>
-            <CardTitle className="text-3xl">Join Room</CardTitle>
+            <div className="mb-1 flex h-10 w-10 items-center justify-center rounded-xl bg-brand-muted text-accent-foreground">
+              <Lock className="h-4.5 w-4.5" />
+            </div>
+            <CardTitle className="font-display text-2xl">Join a room</CardTitle>
             <CardDescription>
-              Enter a Room ID to join and start collaborating.
+              Enter a Room ID to hop in and start collaborating.
             </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-4">
             {/* Room ID */}
             <div className="space-y-2">
-              <Label htmlFor="roomId">Room ID</Label>
+              <Label htmlFor="roomId" className="text-[13px]">Room ID</Label>
               <Input
                 id="roomId"
                 type="text"
@@ -134,16 +138,16 @@ export default function JoinPage() {
                 }}
                 onKeyDown={handleKeyDown}
                 disabled={loading}
-                className={shakeRoomId ? "animate-shake" : ""}
+                className={`h-11 rounded-xl ${shakeRoomId ? "animate-shake" : ""}`}
               />
             </div>
 
             {/* Password field */}
             {requiresPassword && (
-              <div className="space-y-2">
-                <Label htmlFor="password" className="flex items-center gap-2">
-                  <Lock className="h-4 w-4" />
-                  Room Password
+              <div className="animate-fade-up space-y-2">
+                <Label htmlFor="password" className="flex items-center gap-2 text-[13px]">
+                  <Lock className="h-3.5 w-3.5" />
+                  Room password
                 </Label>
                 <Input
                   id="password"
@@ -157,45 +161,45 @@ export default function JoinPage() {
                   onKeyDown={handleKeyDown}
                   disabled={loading}
                   autoFocus
-                  className={
+                  className={`h-11 rounded-xl ${
                     shakePassword ? "animate-shake border-destructive" : ""
-                  }
+                  }`}
                 />
-                <p className="text-sm text-muted-foreground">
-                  This is a private room. Password required to join.
+                <p className="text-xs text-muted-foreground">
+                  This is a private room — the host&apos;s password is required.
                 </p>
               </div>
             )}
 
-            {error && <p className="text-sm text-red-500">{error}</p>}
+            {error && (
+              <p className="animate-fade-up text-xs font-medium text-destructive">{error}</p>
+            )}
 
-            <div className="p-4 bg-muted rounded-lg text-sm">
-              <p className="font-medium mb-1">💡 Tip</p>
-              <p className="text-muted-foreground">
-                You can also paste a full room link here. We'll extract the Room
-                ID automatically.
+            <div className="flex gap-3 rounded-xl bg-secondary/70 p-4">
+              <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Paste a full room link and we&apos;ll extract the Room ID for
+                you automatically.
               </p>
             </div>
           </CardContent>
 
-          <CardFooter className="flex flex-col gap-3">
-            {/* Join Button */}
+          <CardFooter className="flex-col gap-2.5">
             <Button
               onClick={handleJoin}
               disabled={loading || !roomId.trim()}
-              className="w-full"
+              className="h-11 w-full rounded-full"
             >
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {requiresPassword ? "Verify & Join" : "Join Room"}
+              {loading && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+              {requiresPassword ? "Verify & join" : "Join room"}
             </Button>
 
-            {/* Cancel Button */}
             <Button
-              variant="outline"
-              className="w-full hover:cursor-pointer"
+              variant="ghost"
+              className="w-full rounded-full hover:cursor-pointer"
               onClick={() => router.push("/rooms")}
             >
-              Cancel
+              Browse active rooms instead
             </Button>
           </CardFooter>
         </Card>

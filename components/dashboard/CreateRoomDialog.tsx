@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Loader2, Lock } from "lucide-react";
 import {
@@ -22,9 +22,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { DESTRUCTION_TIMERS } from "@/lib/constants";
 
-export default function CreateRoomDialog() {
+export default function CreateRoomDialog({ children }: { children?: ReactNode }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -39,13 +40,11 @@ export default function CreateRoomDialog() {
   });
 
   const handleCreate = async () => {
-    // Validate password
     if (!formData.password.trim()) {
       alert("Please set a password. Password is required to delete the room.");
       return;
     }
 
-    // Clear previous errors
     setRoomNameError("");
     setLoading(true);
 
@@ -89,30 +88,32 @@ export default function CreateRoomDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button
-          size="lg"
-          className="gap-2 transition-all duration-200 hover:shadow-md hover:scale-[1.01] hover:cursor-pointer active:scale-[1]"
-        >
-          <Plus className="h-5 w-5" />
-          {/* Mobile: New Room, Desktop: Create New Room */}
-          <span className="sm:hidden">New Room</span> {/* mobile only */}
-          <span className="hidden sm:inline">Create New Room</span>{" "}
-          {/* desktop only */}
-        </Button>
+        {children ? (
+          children
+        ) : (
+          <Button size="lg" className="group h-11 rounded-full px-6 hover:cursor-pointer">
+            <Plus className="transition-transform duration-300 group-hover:rotate-90" />
+            <span className="sm:hidden">New room</span>
+            <span className="hidden sm:inline">Create new room</span>
+          </Button>
+        )}
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>Create a New Room</DialogTitle>
+          <DialogTitle className="font-display text-xl">Create a new room</DialogTitle>
           <DialogDescription>
             Configure your temporary sharing space.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-5 py-2">
           {/* Room Name */}
           <div className="grid gap-2">
-            <Label htmlFor="name">Custom Room Name (Optional)</Label>
+            <Label htmlFor="name" className="text-[13px]">
+              Custom room name{" "}
+              <span className="font-normal text-muted-foreground">(optional)</span>
+            </Label>
             <Input
               id="name"
               placeholder="e.g., project-delta-review"
@@ -121,26 +122,24 @@ export default function CreateRoomDialog() {
                 setFormData({ ...formData, name: e.target.value });
                 setRoomNameError("");
               }}
-              className={`${shakeInput ? "animate-shake" : ""} ${
-                roomNameError ? "border-red-500 focus-visible:ring-red-500" : ""
-              }`}
+              className={`rounded-xl ${
+                shakeInput ? "animate-shake" : ""
+              } ${roomNameError ? "border-destructive focus-visible:ring-destructive/30" : ""}`}
             />
             {roomNameError ? (
-              <p className="text-sm text-red-500 font-medium">
-                {roomNameError}
-              </p>
+              <p className="text-xs font-medium text-destructive">{roomNameError}</p>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                Leave empty for auto-generated name
+              <p className="text-xs text-muted-foreground">
+                Leave empty for an auto-generated name
               </p>
             )}
           </div>
 
           {/* Password */}
           <div className="grid gap-2">
-            <Label htmlFor="password" className="flex items-center gap-2">
-              <Lock className="h-4 w-4" />
-              Room Password *
+            <Label htmlFor="password" className="flex items-center gap-1.5 text-[13px]">
+              <Lock className="h-3.5 w-3.5" />
+              Room password <span className="text-destructive">*</span>
             </Label>
             <Input
               id="password"
@@ -151,49 +150,46 @@ export default function CreateRoomDialog() {
                 setFormData({ ...formData, password: e.target.value })
               }
               required
+              className="rounded-xl"
             />
-            <p className="text-sm text-muted-foreground">
-              Required to delete this room. Keep it safe!
+            <p className="text-xs text-muted-foreground">
+              Required to delete this room later. Keep it safe.
             </p>
           </div>
 
           {/* Private Room */}
-          <div className="flex items-center gap-2 p-4 border rounded-lg bg-muted/50">
-            <input
-              type="checkbox"
-              id="isPrivate"
-              checked={formData.isPrivate}
-              onChange={(e) =>
-                setFormData({ ...formData, isPrivate: e.target.checked })
-              }
-              className="h-4 w-4"
-            />
+          <div className="flex items-center justify-between gap-4 rounded-xl border bg-muted/40 p-4">
             <div className="flex-1">
-              <Label
-                htmlFor="isPrivate"
-                className="cursor-pointer font-medium flex items-center gap-2"
-              >
-                <Lock className="h-4 w-4" />
-                Private Room
+              <Label htmlFor="isPrivate" className="text-[13px] font-medium">
+                Private room
               </Label>
-              <p className="text-sm text-muted-foreground">
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 {formData.isPrivate
-                  ? "Others will need the password to join this room"
-                  : "Anyone with the room ID can join (no password needed)"}
+                  ? "A password will be required to join"
+                  : "Anyone with the link can join"}
               </p>
             </div>
+            <Switch
+              id="isPrivate"
+              checked={formData.isPrivate}
+              onCheckedChange={(checked) =>
+                setFormData({ ...formData, isPrivate: checked })
+              }
+            />
           </div>
 
           {/* Destruction Timer */}
           <div className="grid gap-2">
-            <Label htmlFor="timer">Destruction Timer</Label>
+            <Label htmlFor="timer" className="text-[13px]">
+              Destruction timer
+            </Label>
             <Select
               value={formData.destructionTimer}
               onValueChange={(value) =>
                 setFormData({ ...formData, destructionTimer: value })
               }
             >
-              <SelectTrigger id="timer">
+              <SelectTrigger id="timer" className="w-full rounded-xl">
                 <SelectValue placeholder="Select duration" />
               </SelectTrigger>
               <SelectContent>
@@ -208,47 +204,36 @@ export default function CreateRoomDialog() {
           </div>
 
           {/* Auto Delete */}
-          <div className="flex items-center gap-2 p-4 border rounded-lg bg-muted/50">
-            <input
-              type="checkbox"
-              id="autoDelete"
-              checked={formData.autoDelete}
-              onChange={(e) =>
-                setFormData({ ...formData, autoDelete: e.target.checked })
-              }
-              className="h-4 w-4"
-            />
+          <div className="flex items-center justify-between gap-4 rounded-xl border bg-muted/40 p-4">
             <div className="flex-1">
-              <Label
-                htmlFor="autoDelete"
-                className="cursor-pointer font-medium"
-              >
-                Automatic Deletion
+              <Label htmlFor="autoDelete" className="text-[13px] font-medium">
+                Automatic deletion
               </Label>
-              <p className="text-sm text-muted-foreground">
-                Delete room after 24 hours of inactivity
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Delete after 24 hours of inactivity
               </p>
             </div>
+            <Switch
+              id="autoDelete"
+              checked={formData.autoDelete}
+              onCheckedChange={(checked) =>
+                setFormData({ ...formData, autoDelete: checked })
+              }
+            />
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button variant="outline" className="rounded-full hover:cursor-pointer" onClick={() => setOpen(false)}>
             Cancel
           </Button>
-
-          {/*Button disabled unless password is filled */}
           <Button
             onClick={handleCreate}
             disabled={loading || !formData.password.trim()}
-            className={
-              !formData.password.trim()
-                ? "opacity-60 cursor-not-allowed hover:cursor-not-allowed"
-                : ""
-            }
+            className="rounded-full hover:cursor-pointer"
           >
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Create Room
+            {loading && <Loader2 className="animate-spin" />}
+            Create room
           </Button>
         </DialogFooter>
       </DialogContent>

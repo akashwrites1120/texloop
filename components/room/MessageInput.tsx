@@ -32,29 +32,29 @@ export default function MessageInput({
   };
 
   return (
-    <div className="p-2 sm:p-3 border-t bg-background">
-      <div className="flex gap-2 items-end">
+    <div className="border-t bg-background p-2 sm:p-3">
+      <div className="flex items-end gap-2 rounded-2xl border bg-muted/40 p-1.5 pl-3 transition-colors focus-within:border-ring/60 focus-within:bg-card">
         <Textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Type a message..."
+          placeholder="Type a message…"
           disabled={disabled}
-          className="min-h-10 sm:min-h-12 max-h-24 resize-none text-xs sm:text-sm flex-1"
+          className="max-h-24 min-h-9 flex-1 resize-none border-0 bg-transparent text-xs shadow-none focus-visible:ring-0 sm:text-sm"
           rows={1}
           style={{ overflowWrap: "break-word", wordBreak: "break-word" }}
         />
         <Button
           onClick={handleSend}
           disabled={!message.trim() || disabled}
-          size="icon"
-          className="h-10 w-10 sm:h-12 sm:w-12 shrink-0 hover:cursor-pointer"
+          size="icon-sm"
+          className="shrink-0 rounded-full hover:cursor-pointer"
         >
-            <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4 " />
+          <Send className="h-3.5 w-3.5" />
         </Button>
       </div>
-      <p className="text-[9px] xs:text-[10px] text-muted-foreground mt-1.5 hidden sm:block">
-        Press Enter to send, Shift+Enter for new line
+      <p className="mt-1.5 hidden text-[10px] text-muted-foreground sm:block">
+        Enter to send · Shift+Enter for a new line
       </p>
     </div>
   );

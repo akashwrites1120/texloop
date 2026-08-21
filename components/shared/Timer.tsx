@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Clock } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 interface TimerProps {
   expiresAt: Date | null;
@@ -11,20 +10,22 @@ interface TimerProps {
 
 export default function Timer({ expiresAt, className }: TimerProps) {
   const [timeLeft, setTimeLeft] = useState<string>('');
+  const [isExpired, setIsExpired] = useState(false);
+  const [isUrgent, setIsUrgent] = useState(false);
 
   useEffect(() => {
-    if (!expiresAt) {
-      setTimeLeft('No expiration');
-      return;
-    }
+    if (!expiresAt) return;
 
     const calculateTimeLeft = () => {
       const now = new Date().getTime();
       const expiry = new Date(expiresAt).getTime();
       const diff = expiry - now;
 
+      setIsUrgent(diff < 5 * 60 * 1000);
+
       if (diff <= 0) {
-        setTimeLeft('Expired');
+        setTimeLeft('expired');
+        setIsExpired(true);
         return;
       }
 
@@ -32,12 +33,12 @@ export default function Timer({ expiresAt, className }: TimerProps) {
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
+      const pad = (n: number) => n.toString().padStart(2, '0');
+
       if (hours > 0) {
-        setTimeLeft(`${hours}h ${minutes}m`);
-      } else if (minutes > 0) {
-        setTimeLeft(`${minutes}m ${seconds}s`);
+        setTimeLeft(`${hours}:${pad(minutes)}:${pad(seconds)}`);
       } else {
-        setTimeLeft(`${seconds}s`);
+        setTimeLeft(`${minutes}:${pad(seconds)}`);
       }
     };
 
@@ -47,20 +48,27 @@ export default function Timer({ expiresAt, className }: TimerProps) {
     return () => clearInterval(interval);
   }, [expiresAt]);
 
-  if (!expiresAt) {
+  if (!expiresAt || isExpired) {
     return null;
   }
 
-  const isExpired = timeLeft === 'Expired';
-  const isUrgent = expiresAt && new Date(expiresAt).getTime() - new Date().getTime() < 5 * 60 * 1000; // Less than 5 minutes
-
   return (
-    <Badge
-      variant={isExpired ? 'destructive' : isUrgent ? 'default' : 'secondary'}
-      className={className}
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-mono text-[11px] font-medium tabular-nums',
+        isUrgent
+          ? 'border-warning/40 bg-warning/10 text-warning'
+          : 'bg-secondary text-secondary-foreground',
+        className
+      )}
     >
-      <Clock className="h-3 w-3 mr-1" />
+      <span
+        className={cn(
+          'h-1.5 w-1.5 rounded-full',
+          isUrgent ? 'animate-pulse bg-warning' : 'bg-brand'
+        )}
+      />
       {timeLeft}
-    </Badge>
+    </span>
   );
 }

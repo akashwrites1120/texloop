@@ -359,14 +359,14 @@ export default function RoomPage() {
   // Loading state
   if (isLoading || verifying) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-        <div className="text-center space-y-4">
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <div className="animate-fade-up space-y-4 text-center">
           <div className="relative inline-block">
-            <div className="absolute inset-0 blur-xl bg-primary/20 rounded-full animate-pulse" />
-            <Loader2 className="h-10 w-10 sm:h-12 sm:w-12 animate-spin text-primary relative" />
+            <div className="absolute inset-0 animate-pulse rounded-full bg-brand/20 blur-xl" />
+            <Loader2 className="relative h-10 animate-spin text-brand sm:h-12 sm:w-12" />
           </div>
-          <p className="text-sm sm:text-base text-muted-foreground font-medium">
-            {verifying ? "Verifying access..." : "Loading room..."}
+          <p className="font-mono text-xs tracking-wide text-muted-foreground uppercase sm:text-sm">
+            {verifying ? "verifying access…" : "loading room…"}
           </p>
         </div>
       </div>
@@ -376,24 +376,24 @@ export default function RoomPage() {
   // Room deleted state
   if (roomDeleted) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-        <Card className="w-full max-w-md shadow-lg">
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <Card className="animate-fade-up w-full max-w-md rounded-2xl shadow-sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive text-lg sm:text-xl">
+            <CardTitle className="flex items-center gap-2 font-display text-lg text-destructive sm:text-xl">
               <AlertCircle className="h-5 w-5 shrink-0" />
-              <span>Room Deleted</span>
+              <span>Room deleted</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Room No Longer Available</AlertTitle>
+              <AlertTitle>Room no longer available</AlertTitle>
               <AlertDescription className="text-sm">
                 {deletionMessage}
               </AlertDescription>
             </Alert>
-            <p className="text-sm text-muted-foreground">
-              Redirecting to rooms list...
+            <p className="font-mono text-xs text-muted-foreground">
+              Redirecting to rooms…
             </p>
           </CardContent>
         </Card>
@@ -404,75 +404,43 @@ export default function RoomPage() {
   // Error state
   if (isError || !room) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-        <div className="w-full max-w-md">
-          {/* Icon Container */}
-          <div className="flex justify-center mb-6">
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
+        <div className="bg-dots mask-fade-y pointer-events-none absolute inset-0 opacity-60" />
+        <div className="animate-fade-up relative w-full max-w-md">
+          {/* Icon */}
+          <div className="mb-7 flex justify-center">
             <div className="relative">
-              <div className="absolute inset-0 bg-red-100 rounded-full blur-xl opacity-60 animate-pulse"></div>
-              <div className="relative bg-white rounded-full p-6 shadow-lg border border-red-100">
+              <div className="absolute inset-0 animate-ping-slow rounded-full bg-destructive/25" />
+              <div className="relative flex h-16 w-16 items-center justify-center rounded-full border bg-card shadow-sm">
                 <AlertCircle
-                  className="h-12 w-12 text-red-500"
+                  className="h-7 w-7 text-destructive"
                   strokeWidth={2}
                 />
               </div>
             </div>
           </div>
 
-          {/* Content Card */}
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-            {/* Header */}
-            <div className="px-6 pt-8 pb-6 text-center border-b border-slate-100">
-              <h1 className="text-4xl font-bold text-slate-900 mb-3 tracking-tight">
-                Room Not Found
-              </h1>
-              <p className="text-slate-600 text-base leading-relaxed mx-auto">
-                The room you're looking for doesn't exist or may have expired.
-                Please check the link or browse available rooms.
-              </p>
-            </div>
+          <div className="rounded-2xl border bg-card p-8 text-center shadow-sm">
+            <h1 className="font-display text-3xl font-semibold tracking-tight">
+              Room not found
+            </h1>
+            <p className="mt-3 mx-auto max-w-xs text-sm leading-relaxed text-muted-foreground">
+              This room doesn&apos;t exist — or its timer ran out and it
+              quietly deleted itself.
+            </p>
 
-            {/* Actions */}
-            <div className="px-6 py-6 bg-slate-50/50">
-              <Button
-                onClick={() => router.push("/rooms")}
-                className="
-                  w-full 
-                  flex 
-                  items-center 
-                  justify-center 
-                  gap-2 
-                  px-6 
-                  py-6
-                  bg-slate-900 
-                  hover:bg-slate-800 
-                  text-white 
-                  font-medium 
-                  rounded-xl 
-                  transition-all 
-                  duration-200 
-                  shadow-lg 
-                  shadow-slate-900/10 
-                  hover:shadow-xl 
-                  hover:shadow-slate-900/20
-                  active:scale-[0.98]
-                "
-              >
-                <ChevronLeft className="h-5 w-5" strokeWidth={2.5} />
-                <span>Browse Active Rooms</span>
-              </Button>
-            </div>
+            <Button
+              onClick={() => router.push("/rooms")}
+              className="mt-7 h-11 w-full rounded-full hover:cursor-pointer active:scale-[0.98]"
+            >
+              <ChevronLeft className="h-4 w-4" strokeWidth={2.5} />
+              Browse active rooms
+            </Button>
           </div>
 
-          {/* Help Text */}
-          <p className="text-center text-sm text-slate-500 mt-6">
-            Need help?{" "}
-            <a
-              href="github.com/akashwrites1120"
-              className="text-slate-700 hover:text-slate-900 font-medium underline underline-offset-2"
-            >
-              Contact Support
-            </a>
+          <p className="mt-6 text-center text-xs text-muted-foreground">
+            Double-check the link — IDs look like{" "}
+            <span className="font-mono">clever-cat-123</span>.
           </p>
         </div>
       </div>
@@ -482,14 +450,15 @@ export default function RoomPage() {
   // Password verification required
   if (room.isPrivate && !isVerified) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-        <Card className="w-full max-w-md shadow-lg py-8">
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden p-4">
+        <div className="bg-dots mask-fade-y pointer-events-none absolute inset-x-0 top-0 h-72 opacity-60" />
+        <Card className="animate-fade-up relative w-full max-w-md rounded-2xl py-8 shadow-sm">
           <CardHeader className="space-y-3">
-            <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <Lock className="h-6 w-6 text-primary" />
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-muted text-accent-foreground">
+              <Lock className="h-5 w-5" />
             </div>
-            <CardTitle className="text-center text-xl sm:text-2xl">
-              Private Room
+            <CardTitle className="font-display text-center text-xl sm:text-2xl">
+              Private room
             </CardTitle>
             <CardDescription className="text-center text-sm">
               This room is password protected. Enter the password to join.
@@ -524,21 +493,21 @@ export default function RoomPage() {
             </div>
           </CardContent>
 
-          <CardFooter className="flex flex-col sm:flex-row gap-2">
+          <CardFooter className="flex flex-col gap-2 sm:flex-row">
             <Button
-              variant="outline"
+              variant="ghost"
               onClick={() => router.push("/rooms")}
-              className="w-full sm:flex-1 h-10 sm:h-11 active:scale-[0.98] hover:cursor-pointer"
+              className="h-10 w-full rounded-full hover:cursor-pointer sm:h-11 sm:flex-1 active:scale-[0.98]"
             >
               Cancel
             </Button>
             <Button
               onClick={handlePasswordSubmit}
               disabled={verifying || !password.trim()}
-              className="w-full sm:flex-1 h-10 sm:h-11 active:scale-[0.98] hover:cursor-pointer"
+              className="h-10 w-full rounded-full hover:cursor-pointer sm:h-11 sm:flex-1 active:scale-[0.98]"
             >
-              {verifying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Join Room
+              {verifying && <Loader2 className="animate-spin" />}
+              Join room
             </Button>
           </CardFooter>
         </Card>

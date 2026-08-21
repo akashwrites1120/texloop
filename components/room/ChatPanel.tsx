@@ -4,8 +4,6 @@ import { Message } from "@/types/message";
 import { Card } from "@/components/ui/card";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
-import { Badge } from "@/components/ui/badge";
-import { Wifi, WifiOff } from "lucide-react";
 
 interface ChatPanelProps {
   messages: Message[];
@@ -25,30 +23,39 @@ export default function ChatPanel({
   return (
     <Card className="flex flex-col h-full border-l-0 md:border-l rounded-none overflow-hidden">
       {/* Compact Header - matching TextEditor style */}
-      <div className="px-3 py-1.5 sm:px-4 sm:py-2.5 border-b bg-muted/30 shrink-0">
+      <div className="shrink-0 border-b bg-muted/40 px-3 py-2 sm:px-4 sm:py-2.5">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-xs sm:text-sm">Chat</h3>
-            <span className="text-[10px] xs:text-xs text-muted-foreground">
+            <h3 className="text-[11px] font-semibold tracking-wide uppercase">
+              Chat
+            </h3>
+            <span className="font-mono text-[10px] text-muted-foreground">
               {messages.length} {messages.length === 1 ? "msg" : "msgs"}
             </span>
           </div>
-          <Badge
-            variant={isConnected ? "default" : "destructive"}
-            className="gap-1 text-[9px] sm:text-[10px] h-5 px-1.5"
+          <span
+            className={`inline-flex h-5 items-center gap-1.5 rounded-full border px-2 text-[10px] font-medium ${
+              isConnected
+                ? "border-brand/30 bg-brand-muted text-accent-foreground"
+                : "border-destructive/30 bg-destructive/10 text-destructive"
+            }`}
           >
-            {isConnected ? (
-              <>
-                <Wifi className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                <span className="inline">Online</span>
-              </>
-            ) : (
-              <>
-                <WifiOff className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                <span className="inline">Offline</span>
-              </>
-            )}
-          </Badge>
+            <span
+              className={`relative flex h-1.5 w-1.5 ${
+                isConnected ? "" : ""
+              }`}
+            >
+              {isConnected && (
+                <span className="absolute inline-flex h-full w-full animate-ping-slow rounded-full bg-brand" />
+              )}
+              <span
+                className={`relative inline-flex h-1.5 w-1.5 rounded-full ${
+                  isConnected ? "bg-brand" : "bg-destructive"
+                }`}
+              />
+            </span>
+            {isConnected ? "Online" : "Offline"}
+          </span>
         </div>
       </div>
 

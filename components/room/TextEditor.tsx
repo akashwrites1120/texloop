@@ -181,21 +181,21 @@ export default function TextEditor({
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Header with Live Sync Toggle */}
-      <div className="px-3 py-2 sm:px-4 sm:py-2.5 border-b bg-muted/30 shrink-0">
+      <div className="shrink-0 border-b bg-muted/40 px-3 py-2 sm:px-4 sm:py-2.5">
         <div className="flex items-center justify-between gap-2">
           {/* Left side - Title and Sync Status */}
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <h3 className="font-semibold text-xs sm:text-sm shrink-0">
-              Live Editor
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <h3 className="shrink-0 text-[11px] font-semibold tracking-wide uppercase">
+              Editor
             </h3>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 rounded-full border bg-card px-2 py-0.5">
               {liveSyncEnabled ? (
-                <Wifi className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-green-500 shrink-0" />
+                <Wifi className="h-3 w-3 shrink-0 text-brand" />
               ) : (
-                <WifiOff className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground shrink-0" />
+                <WifiOff className="h-3 w-3 shrink-0 text-muted-foreground" />
               )}
-              <span className="text-[9px] sm:text-[10px] text-muted-foreground  xs:inline">
-                Live Sync {liveSyncEnabled ? "On" : "Off"}
+              <span className="text-[10px] font-medium text-muted-foreground">
+                Live sync {liveSyncEnabled ? "on" : "off"}
               </span>
             </div>
           </div>
@@ -268,32 +268,30 @@ export default function TextEditor({
       </div>
 
       {/* Footer with Progress Bar */}
-      <div className="border-t bg-muted/30 shrink-0">
+      <div className="shrink-0 border-t bg-muted/40">
         {/* Character Usage Progress Bar */}
-        <div className="h-0.5 sm:h-1 bg-muted/50 relative overflow-hidden">
+        <div className="relative h-0.5 overflow-hidden bg-border/60 sm:h-1">
           <div
             className={`h-full transition-all duration-300 ${
-              isNearLimit
-                ? "bg-gradient-to-r from-yellow-500 to-red-500"
-                : "bg-gradient-to-r from-primary/60 to-primary"
+              isNearLimit ? "bg-warning" : "bg-brand"
             }`}
             style={{ width: `${Math.min(usagePercent, 100)}%` }}
           />
         </div>
 
         {/* Stats */}
-        <div className="flex items-center justify-between gap-2 px-3 py-1.5 sm:px-4 sm:py-2 text-[10px] xs:text-xs">
-          <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center justify-between gap-2 px-3 py-1.5 text-[10px] sm:px-4 sm:py-2 xs:text-xs">
+          <div className="flex flex-wrap items-center gap-1.5">
             <span className="flex items-center gap-1 font-medium">
               {isNearLimit ? (
-                <AlertCircle className="w-3 h-3 text-yellow-500 shrink-0" />
+                <AlertCircle className="h-3 w-3 shrink-0 text-warning" />
               ) : (
-                <CheckCircle2 className="w-3 h-3 text-green-500 shrink-0" />
+                <CheckCircle2 className="h-3 w-3 shrink-0 text-brand" />
               )}
               <span
                 className={
                   isNearLimit
-                    ? "text-yellow-600 dark:text-yellow-500"
+                    ? "text-warning"
                     : "text-muted-foreground"
                 }
               >
@@ -304,13 +302,13 @@ export default function TextEditor({
                 </span>
               </span>
             </span>
-            <span className="text-muted-foreground/60 hidden sm:inline">•</span>
-            <span className="text-muted-foreground/80 hidden sm:inline">
+            <span className="hidden text-muted-foreground/60 sm:inline">•</span>
+            <span className="hidden font-mono text-muted-foreground/80 sm:inline">
               {usagePercent.toFixed(1)}% used
             </span>
           </div>
-          <span className="text-muted-foreground/60 hidden xs:inline text-[10px]">
-            {liveSyncEnabled ? "Real-time" : "Auto-save"}
+          <span className="hidden font-mono text-[10px] text-muted-foreground/60 xs:inline">
+            {liveSyncEnabled ? "real-time" : "auto-save"}
           </span>
         </div>
       </div>
@@ -393,27 +391,6 @@ export default function TextEditor({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Shake Animation Style */}
-      <style jsx global>{`
-        @keyframes shake {
-          0%,
-          100% {
-            transform: translateX(0);
-          }
-          20%,
-          60% {
-            transform: translateX(-4px);
-          }
-          40%,
-          80% {
-            transform: translateX(4px);
-          }
-        }
-        .animate-shake {
-          animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-        }
-      `}</style>
     </div>
   );
 }
