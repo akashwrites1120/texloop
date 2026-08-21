@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Message } from "@/types/message";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { format } from "date-fns";
@@ -19,12 +19,25 @@ export default function MessageList({
   onSelectMessage,
 }: MessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  const toggleExpanded = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   const getInitials = (username: string) => {
     return username
@@ -65,6 +78,8 @@ export default function MessageList({
         {messages.map((message) => {
           const isSystem = message.type === "system";
           const isOwn = message.userId === currentUserId;
+          const isLong = isMessageLong(message.message);
+          const isExpanded = expandedIds.has(message._id);
 
           if (isSystem) {
             return (
@@ -128,14 +143,14 @@ export default function MessageList({
                   <p
                     className={cn(
                       "text-xs sm:text-sm whitespace-pre-wrap break-words leading-relaxed",
-                      isMessageLong(message.message) && "line-clamp-4"
+                      isLong && !isExpanded && "line-clamp-4"
                     )}
                   >
                     {message.message}
                   </p>
 
                   {/* Show More Button */}
-                  {isMessageLong(message.message) && (
+                  {isLong && (
                     <button
                       className={cn(
                         "text-[10px] xs:text-xs mt-1 font-medium hover:underline",
@@ -143,8 +158,12 @@ export default function MessageList({
                           ? "text-primary-foreground/80"
                           : "text-muted-foreground"
                       )}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleExpanded(message._id);
+                      }}
                     >
-                      Show more
+                      {isExpanded ? "Show less" : "Show more"}
                     </button>
                   )}
 

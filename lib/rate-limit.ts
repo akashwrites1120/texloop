@@ -31,8 +31,8 @@ export function rateLimit(
   limit: number = 20,
   windowMs: number = 60000
 ): NextResponse | null {
-  const ip =
-    (request as any).ip || request.headers.get("x-forwarded-for") || "unknown";
+  const forwarded = request.headers.get("x-forwarded-for");
+  const ip = forwarded?.split(",")[0]?.trim() || "unknown";
   const now = Date.now();
 
   if (!store[ip]) {

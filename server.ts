@@ -158,7 +158,6 @@ app.prepare().then(() => {
         if (!isRoomMember(socket, roomId)) return;
 
         socket.leave(roomId);
-        const previousRoomId = socket.data.roomId;
         socket.data.roomId = undefined;
 
         const room = await RoomModel.findOneAndUpdate(

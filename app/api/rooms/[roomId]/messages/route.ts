@@ -40,7 +40,7 @@ export async function GET(
           ...msg,
           message: decryptMessage(msg.message),
         };
-      } catch (e) {
+      } catch {
         // If decryption fails, return original message (might be unencrypted legacy data)
         return msg;
       }

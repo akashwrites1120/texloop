@@ -28,7 +28,7 @@ export class CleanupService {
       }
 
       // 2. Delete all messages associated with this room
-      const messageDeleteResult = await MessageModel.deleteMany({ roomId });
+      await MessageModel.deleteMany({ roomId });
 
       // 3. Notify all connected clients via socket (if callback provided)
       if (notifyCallback) {

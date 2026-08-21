@@ -71,15 +71,21 @@ export async function POST(request: NextRequest) {
       });
 
       // Don't send password hash to client
-      const { passwordHash: _, ...roomWithoutPassword } = room.toObject();
+      const roomObject = room.toObject() as unknown as Record<string, unknown>;
+      delete roomObject.passwordHash;
 
       return NextResponse.json({
         success: true,
-        room: roomWithoutPassword,
+        room: roomObject,
       });
-    } catch (createError: any) {
+    } catch (createError) {
       // Handle duplicate key error (concurrent creation)
-      if (createError.code === 11000) {
+      if (
+        typeof createError === "object" &&
+        createError !== null &&
+        "code" in createError &&
+        (createError as { code?: number }).code === 11000
+      ) {
         return NextResponse.json(
           {
             success: false,

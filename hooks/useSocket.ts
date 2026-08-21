@@ -76,7 +76,7 @@ export function useSocket() {
     });
 
     socketRef.current = socketInstance;
-    setSocket(socketInstance);
+    queueMicrotask(() => setSocket(socketInstance));
 
     // Cleanup on unmount
     return () => {

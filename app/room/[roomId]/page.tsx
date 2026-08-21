@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useSocket } from "@/hooks/useSocket";
 import { useRoom } from "@/hooks/useRoom";
@@ -55,6 +55,7 @@ export default function RoomPage() {
   const [passwordError, setPasswordError] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const urlVerifyStartedRef = useRef(false);
 
   // Mobile view state
   const [activeTab, setActiveTab] = useState<"editor" | "chat">("editor");
@@ -75,6 +76,7 @@ export default function RoomPage() {
   // Check if room requires password and verify
   useEffect(() => {
     if (!room) return;
+    if (urlVerifyStartedRef.current) return;
 
     const verifyAccess = async () => {
       if (!room.isPrivate) {
@@ -83,6 +85,7 @@ export default function RoomPage() {
       }
 
       if (urlPassword) {
+        urlVerifyStartedRef.current = true;
         setVerifying(true);
         try {
           const response = await fetch(`/api/rooms/${roomId}/verify`, {
@@ -111,6 +114,7 @@ export default function RoomPage() {
     };
 
     verifyAccess();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room, roomId, urlPassword]);
 
   const handlePasswordSubmit = async () => {
@@ -295,6 +299,7 @@ export default function RoomPage() {
     password,
     activeTab,
     liveSyncEnabled,
+    mutate,
   ]);
 
   // Reset unread count when switching to chat tab
@@ -516,7 +521,7 @@ export default function RoomPage() {
 
   return (
     <div className="h-dvh flex flex-col bg-background overflow-hidden">
-      <RoomHeader room={room} roomPassword={password} />
+      <RoomHeader room={room} />
 
       {/* Connection Status Alert */}
       {connectionError && (

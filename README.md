@@ -55,7 +55,7 @@ Follow these steps to set up the project locally.
 
    ```env
    MONGODB_URI=your_mongodb_connection_string
-   NEXT_PUBLIC_SITE_URL=http://localhost:3000
+   NEXT_PUBLIC_APP_URL=http://localhost:3000
    NEXT_PUBLIC_SOCKET_URL=http://localhost:3000
    ENCRYPTION_KEY=your_32_character_encryption_key_here
    CRON_SECRET=your_32_character_cron_secret_here

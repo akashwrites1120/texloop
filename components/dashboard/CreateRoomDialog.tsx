@@ -78,7 +78,7 @@ export default function CreateRoomDialog({ children }: { children?: ReactNode })
           alert(data.error || "Failed to create room");
         }
       }
-    } catch (error) {
+    } catch {
       alert("Failed to create room");
     } finally {
       setLoading(false);

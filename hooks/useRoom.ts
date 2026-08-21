@@ -1,7 +1,7 @@
 'use client';
 
 import useSWR from 'swr';
-import { Room, RoomResponse } from '@/types/room';
+import { RoomResponse } from '@/types/room';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 

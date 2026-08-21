@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import RoomModel from "@/models/room";
-import MessageModel from "@/models/message";
 import { verifyPassword } from "@/lib/encryption";
 import { DeleteRoomInput } from "@/types/room";
 import { MAX_TEXT_LENGTH } from "@/lib/constants";
@@ -39,7 +38,9 @@ export async function GET(
       );
     }
 
-    const { passwordHash, ...roomWithoutPassword } = room;
+    // Don't send password hash to client
+    const roomWithoutPassword = { ...room };
+    delete (roomWithoutPassword as Record<string, unknown>).passwordHash;
 
     // Private rooms only expose full data with a valid password
     if (room.isPrivate) {
@@ -118,7 +119,7 @@ export async function DELETE(
     const notifyCallback = async (roomId: string) => {
       try {
         await fetch(
-          `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/socket/room-deleted`,
+          `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/notify/room-deleted`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

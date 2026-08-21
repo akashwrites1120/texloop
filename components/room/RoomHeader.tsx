@@ -32,10 +32,9 @@ import { copyToClipboard } from "@/lib/utils";
 
 interface RoomHeaderProps {
   room: Room;
-  roomPassword?: string;
 }
 
-export default function RoomHeader({ room, roomPassword }: RoomHeaderProps) {
+export default function RoomHeader({ room }: RoomHeaderProps) {
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import * as Y from "yjs";
 import { Socket } from "socket.io-client";
 
@@ -21,7 +21,6 @@ export function useYjsEditor({
 }: UseYjsEditorProps) {
   const ydocRef = useRef<Y.Doc | null>(null);
   const ytextRef = useRef<Y.Text | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
   const hasSyncedRef = useRef(false); // Track if we've received sync data
 
   useEffect(() => {
@@ -29,7 +28,6 @@ export function useYjsEditor({
     if (!ydocRef.current) {
       ydocRef.current = new Y.Doc();
       ytextRef.current = ydocRef.current.getText("content");
-      setIsInitialized(true);
     }
 
     return () => {
@@ -38,7 +36,6 @@ export function useYjsEditor({
         ydocRef.current.destroy();
         ydocRef.current = null;
         ytextRef.current = null;
-        setIsInitialized(false);
         hasSyncedRef.current = false;
       }
     };
@@ -59,7 +56,7 @@ export function useYjsEditor({
     const ytext = ytextRef.current;
 
     // Listen for local changes and broadcast to other clients
-    const updateHandler = (update: Uint8Array, origin: any) => {
+    const updateHandler = (update: Uint8Array, origin: unknown) => {
       // Don't broadcast updates that came from the network
       if (origin !== "network") {
         socket.emit("yjs:update", {
@@ -148,9 +145,6 @@ export function useYjsEditor({
   };
 
   return {
-    isInitialized,
     updateText,
-    ytext: ytextRef.current,
-    ydoc: ydocRef.current,
   };
 }

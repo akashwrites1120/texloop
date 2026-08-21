@@ -43,12 +43,13 @@ export async function POST(
       );
     }
 
-    const { passwordHash: _, ...roomWithoutPassword } = room.toObject();
+    const roomObject = room.toObject() as unknown as Record<string, unknown>;
+    delete roomObject.passwordHash;
 
     return NextResponse.json({
       success: true,
       message: "Password verified",
-      room: roomWithoutPassword,
+      room: roomObject,
     });
   } catch (error) {
     console.error("Error verifying password:", error);
