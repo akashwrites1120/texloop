@@ -14,6 +14,7 @@ export async function GET(
     await connectDB();
 
     const { roomId } = await params;
+    const password = request.nextUrl.searchParams.get("password") ?? undefined;
 
     const room = await RoomModel.findOne({ roomId }).lean();
 
@@ -37,20 +38,29 @@ export async function GET(
       );
     }
 
-    // Don't send password hash to client
     const { passwordHash, ...roomWithoutPassword } = room;
 
-    // If private room, indicate it requires password
+    // Private rooms only expose full data with a valid password
     if (room.isPrivate) {
-      return NextResponse.json({
-        success: true,
-        room: roomWithoutPassword,
-        requiresPassword: true,
-      });
-    }
+      const authorized = password
+        ? await verifyPassword(password, room.passwordHash ?? "")
+        : false;
 
-    // Update last activity
-    await RoomModel.updateOne({ roomId }, { lastActivity: new Date() });
+      if (!authorized) {
+        return NextResponse.json({
+          success: true,
+          requiresPassword: true,
+          room: {
+            roomId: room.roomId,
+            name: room.name,
+            isPrivate: true,
+            autoDelete: room.autoDelete,
+            createdAt: room.createdAt,
+            expiresAt: room.expiresAt,
+          },
+        });
+      }
+    }
 
     return NextResponse.json({
       success: true,

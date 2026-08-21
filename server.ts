@@ -60,18 +60,38 @@ app.prepare().then(() => {
     pingInterval: 25000,
   });
 
-  // Store io instance globally for API routes
-  // @ts-ignore
-  global.io = io;
+  // Store io instance for API routes
+  setSocketIO(io);
+
+  // Shared Y.js document state per room (in-memory; use Redis in production)
+  const roomStates = new Map<string, Uint8Array>();
+
+  const isRoomMember = (
+    socket: { data?: { roomId?: string; userId?: string } },
+    roomId: string
+  ) => {
+    const data = socket.data;
+    return Boolean(data?.userId && data?.roomId === roomId);
+  };
 
   io.on("connection", (socket) => {
     // Join room
     socket.on("room:join", async ({ roomId, userId, username, password }) => {
       try {
+        if (typeof roomId !== "string" || typeof userId !== "string") return;
+
         // Rate limiting: 20 join attempts per minute per socket
         if (rateLimiter.isRateLimited(`join:${socket.id}`, 20, 60000)) {
           socket.emit("error", {
             message: "Too many join attempts. Please wait a moment.",
+          });
+          return;
+        }
+
+        // One room per socket connection
+        if (socket.data?.roomId && socket.data.roomId !== roomId) {
+          socket.emit("error", {
+            message: "You are already connected to another room.",
           });
           return;
         }
@@ -84,11 +104,13 @@ app.prepare().then(() => {
           return;
         }
 
-        if (room.isPrivate && password) {
-          const isValid = await verifyPassword(
-            password as string,
-            room.passwordHash || ""
-          );
+        // Private rooms ALWAYS require a valid password
+        if (room.isPrivate) {
+          if (!password || typeof password !== "string") {
+            socket.emit("error", { message: "Password required to join" });
+            return;
+          }
+          const isValid = await verifyPassword(password, room.passwordHash || "");
           if (!isValid) {
             socket.emit("error", { message: "Incorrect password" });
             return;
@@ -133,7 +155,11 @@ app.prepare().then(() => {
     // Leave room
     socket.on("room:leave", async ({ roomId, userId }) => {
       try {
+        if (!isRoomMember(socket, roomId)) return;
+
         socket.leave(roomId);
+        const previousRoomId = socket.data.roomId;
+        socket.data.roomId = undefined;
 
         const room = await RoomModel.findOneAndUpdate(
           { roomId },
@@ -169,6 +195,8 @@ app.prepare().then(() => {
     // Send message
     socket.on("message:send", async ({ roomId, userId, username, message }) => {
       try {
+        if (!isRoomMember(socket, roomId)) return;
+
         // Rate limiting: 30 messages per minute per socket
         if (rateLimiter.isRateLimited(`message:${socket.id}`, 30, 60000)) {
           socket.emit("error", {
@@ -202,8 +230,16 @@ app.prepare().then(() => {
     });
 
     // Update text content (live editing)
-    socket.on("text:change", async ({ roomId, textContent, userId }) => {
+    socket.on("text:change", async ({ roomId, textContent }) => {
       try {
+        if (!isRoomMember(socket, roomId)) return;
+        if (typeof textContent !== "string") return;
+
+        // Rate limiting: 60 updates per minute per socket
+        if (rateLimiter.isRateLimited(`text:${socket.id}`, 60, 60000)) {
+          return;
+        }
+
         await RoomModel.updateOne(
           { roomId },
           {
@@ -220,11 +256,16 @@ app.prepare().then(() => {
     });
 
     // Y.js collaborative editing events
-    // Store Y.js state per room in memory (in production, consider Redis)
-    const roomStates = new Map<string, Uint8Array>();
-
     socket.on("yjs:update", async ({ roomId, update }) => {
       try {
+        if (!isRoomMember(socket, roomId)) return;
+        if (!Array.isArray(update)) return;
+
+        // Rate limiting: 300 updates per minute per socket
+        if (rateLimiter.isRateLimited(`yjs:${socket.id}`, 300, 60000)) {
+          return;
+        }
+
         // Convert array back to Uint8Array
         const updateArray = new Uint8Array(update);
 
@@ -265,6 +306,8 @@ app.prepare().then(() => {
 
     socket.on("yjs:sync-request", async ({ roomId }) => {
       try {
+        if (!isRoomMember(socket, roomId)) return;
+
         // Send current state to the requesting client
         const state = roomStates.get(roomId);
         if (state) {
