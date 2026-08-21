@@ -94,6 +94,9 @@ export default function RoomPage() {
           const data = await response.json();
 
           if (data.success) {
+            if (data.room) {
+              mutate({ success: true, room: data.room }, { revalidate: false });
+            }
             setIsVerified(true);
           } else {
             setPasswordError("Invalid password from URL");
@@ -129,6 +132,9 @@ export default function RoomPage() {
       const data = await response.json();
 
       if (data.success) {
+        if (data.room) {
+          mutate({ success: true, room: data.room }, { revalidate: false });
+        }
         setIsVerified(true);
       } else {
         setPasswordError("Incorrect password");
@@ -171,23 +177,16 @@ export default function RoomPage() {
   useEffect(() => {
     if (!socket || !isConnected || !roomId || hasJoined || !isVerified) return;
 
-    const joinRoom = () => {
-      socket.emit("room:join", {
-        roomId,
-        userId,
-        username,
-        password: room?.isPrivate ? password : undefined,
-      });
-      setHasJoined(true);
-    };
+    socket.emit("room:join", {
+      roomId,
+      userId,
+      username,
+      password: room?.isPrivate ? password : undefined,
+    });
+    setHasJoined(true);
 
-    joinRoom();
-
-    return () => {
-      if (socket && hasJoined) {
-        socket.emit("room:leave", { roomId, userId });
-      }
-    };
+    // Leaving is handled by the server's disconnect handler when the
+    // socket from useSocket() is disconnected on unmount.
   }, [
     socket,
     isConnected,

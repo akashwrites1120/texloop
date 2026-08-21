@@ -4,6 +4,7 @@ import RoomModel from "@/models/room";
 import MessageModel from "@/models/message";
 import { verifyPassword } from "@/lib/encryption";
 import { DeleteRoomInput } from "@/types/room";
+import { MAX_TEXT_LENGTH } from "@/lib/constants";
 
 // GET specific room by ID
 export async function GET(
@@ -151,7 +152,7 @@ export async function DELETE(
   }
 }
 
-// PATCH update room text content
+// PATCH update room text content (password required)
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ roomId: string }> }
@@ -161,16 +162,20 @@ export async function PATCH(
 
     const { roomId } = await params;
 
-    const { textContent } = await request.json();
+    const body = await request.json();
+    const { textContent, password } = body;
 
-    const room = await RoomModel.findOneAndUpdate(
-      { roomId },
-      {
-        textContent,
-        lastActivity: new Date(),
-      },
-      { new: true }
-    );
+    if (typeof textContent !== "string" || textContent.length > MAX_TEXT_LENGTH) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `textContent must be a string of at most ${MAX_TEXT_LENGTH} characters`,
+        },
+        { status: 400 }
+      );
+    }
+
+    const room = await RoomModel.findOne({ roomId });
 
     if (!room) {
       return NextResponse.json(
@@ -179,9 +184,32 @@ export async function PATCH(
       );
     }
 
+    if (typeof password !== "string" || !password) {
+      return NextResponse.json(
+        { success: false, error: "Password required to update this room" },
+        { status: 403 }
+      );
+    }
+
+    const isValid = await verifyPassword(password, room.passwordHash ?? "");
+    if (!isValid) {
+      return NextResponse.json(
+        { success: false, error: "Incorrect password" },
+        { status: 403 }
+      );
+    }
+
+    await RoomModel.updateOne(
+      { roomId },
+      {
+        textContent,
+        lastActivity: new Date(),
+      }
+    );
+
     return NextResponse.json({
       success: true,
-      room,
+      message: "Room updated successfully",
     });
   } catch (error) {
     console.error("Error updating room:", error);

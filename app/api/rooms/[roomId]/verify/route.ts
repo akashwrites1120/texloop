@@ -43,9 +43,12 @@ export async function POST(
       );
     }
 
+    const { passwordHash: _, ...roomWithoutPassword } = room.toObject();
+
     return NextResponse.json({
       success: true,
       message: "Password verified",
+      room: roomWithoutPassword,
     });
   } catch (error) {
     console.error("Error verifying password:", error);
