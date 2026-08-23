@@ -67,8 +67,9 @@ export default function HomePage() {
               Live collaboration, zero signup
             </div>
 
-            <h1 className="animate-fade-up font-display max-w-3xl text-4xl leading-[1.06] font-semibold tracking-tight text-balance sm:text-6xl md:text-7xl [animation-delay:80ms]">
-              Share text{" "}
+            <h1 className="animate-fade-up font-display max-w-3xl text-4xl leading-[1.06] font-semibold tracking-tight sm:text-6xl md:text-7xl [animation-delay:80ms]">
+              Share text
+              <br />
               <span className="whitespace-nowrap">
                 <RotatingPhrase />
               </span>

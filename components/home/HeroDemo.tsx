@@ -164,7 +164,7 @@ export default function HeroDemo() {
       </div>
 
       {/* Floating chips */}
-      <div className="animate-float-y absolute -top-3 -right-3 hidden rotate-2 items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 shadow-md md:flex">
+      <div className="animate-float-y absolute -top-0.5 -right-0.5 hidden rotate-2 items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 shadow-md md:flex">
         <svg className="h-3.5 w-3.5 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
         <span className="text-xs font-medium">Synced</span>
       </div>
