@@ -115,7 +115,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <Reveal delay={200} className="mx-auto max-w-4xl pb-16 sm:pb-24">
+          <Reveal immediate delay={200} className="mx-auto max-w-4xl pb-16 sm:pb-24">
             <HeroDemo />
           </Reveal>
         </div>

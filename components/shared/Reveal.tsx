@@ -8,6 +8,8 @@ interface RevealProps {
   className?: string;
   delay?: number;
   as?: "div" | "section" | "span";
+  /** Play the fade-up immediately on mount instead of waiting for scroll. */
+  immediate?: boolean;
 }
 
 export default function Reveal({
@@ -15,11 +17,19 @@ export default function Reveal({
   className,
   delay = 0,
   as = "div",
+  immediate = false,
 }: RevealProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    if (immediate) {
+      // Trigger on the next frame so the initial hidden styles are painted
+      // first and the fade-up transition actually plays.
+      const raf = requestAnimationFrame(() => setVisible(true));
+      return () => cancelAnimationFrame(raf);
+    }
+
     const el = ref.current;
     if (!el) return;
 
@@ -35,7 +45,7 @@ export default function Reveal({
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [immediate]);
 
   const Tag = as;
 
