@@ -33,7 +33,13 @@ export default function Navbar({ className }: { className?: string }) {
                 Active rooms
               </Button>
             </Link>
-            <Link href="/join">
+            {/* Mobile: show Active rooms instead of Join a room */}
+            <Link href="/rooms" className="sm:hidden">
+              <Button size="sm" className="hover:cursor-pointer">
+                Active rooms
+              </Button>
+            </Link>
+            <Link href="/join" className="hidden sm:block">
               <Button size="sm" className="hover:cursor-pointer">
                 Join a room
               </Button>
